@@ -13,6 +13,9 @@ into `~/.claude/skills`. No account ids, brand names or machine paths are hardco
 | [`content-foundry`](skills/content-foundry/) | Brand locked content production. Pulls a client's brand and weekly context from Google Drive, unifies a mixed asset dump, researches, writes a reviewable brief, generates and composites on brand assets, gates on Fair Housing and slop, and delivers a finished set to the client's `01 – Waiting` folder. |
 | [`brand-voice`](skills/brand-voice/) | Loads a brand's voice pack before any public facing copy is written, and audits the draft against it. |
 
+Each skill has its own README explaining the practices behind it, and a `SKILL.md` that is the
+operating manual Claude follows.
+
 More skills will be added.
 
 ## Quick start
@@ -81,3 +84,7 @@ The Post Bridge write path returns success without reliably persisting fields. E
 this bundle goes through a verify and retry helper for that reason.
 
 Read [docs/post-bridge-api-notes.md](docs/post-bridge-api-notes.md) before extending anything.
+
+## License
+
+MIT. See [LICENSE](LICENSE). Bundled fonts are SIL OFL.
