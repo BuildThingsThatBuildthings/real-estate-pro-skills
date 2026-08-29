@@ -68,6 +68,7 @@ runs/{agent}/{yyyy-mm-dd}-{property-slug}/
   claims.json        3. split, then 4. classified
   reconciliation.md  5. client-facing
   talk-track.md      5. agent-facing
+  deliver/          client-facing artifacts, and only these, go to Drive
   GATE.txt           6. the gate output that let it out
 ```
 
@@ -149,6 +150,29 @@ Fix the document, not the gate. If a gate looks wrong, it is a bug worth a test 
 Deliver the run directory to the agent. Say plainly which claims stayed `unknowable` and which
 figures rest on `[verified]` rather than a claim, because those are the two places a human still
 has to look.
+
+### 8. Deliver to `01 Waiting`
+
+Everything this run produced goes to the client's Waiting folder, in its own
+dated folder, and stops there. The client moves it to Approved. Nothing here
+publishes.
+
+Put the client-facing artifacts in `deliver/` inside the run directory — `reconciliation.md` for the client, and `talk-track.md` if the agent wants it in the same place.
+Working files stay behind — a review queue full of JSON is a review queue nobody reads.
+
+Using the Drive connector (default, no setup):
+
+```
+create_file  title: "2026-08-29 — Client AI Reconciliation — 412 Maple Ridge Dr"
+             mimeType: "application/vnd.google-apps.folder"
+             parentId: "<the client's 01 Waiting folder id>"
+```
+
+then one `create_file` per artifact into that folder, with
+`disableConversionToGoogleType: true` to keep markdown as markdown.
+
+Full detail, including how to find the Waiting folder id once and how to clear a
+processed drop folder: [`docs/drive-delivery.md`](../../docs/drive-delivery.md).
 
 ## Setup
 

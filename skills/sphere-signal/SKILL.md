@@ -66,6 +66,7 @@ runs/{agent}/{yyyy-mm-dd}/
   reasons.json       2. computed, with the arithmetic behind each
   research.md        3. what was checked before drafting
   drafts.json        4. one draft per worked reason
+  deliver/          client-facing artifacts, and only these, go to Drive
   GATE.txt           5. the gate output that approved them
 ```
 
@@ -137,6 +138,29 @@ from their own account. Then log what happened back into `touchpoints.csv` — i
 made and its due date, because that is what next week's `promise_due` reads.
 
 The loop only compounds if step 5 gets written down.
+
+### 6. Deliver to `01 Waiting`
+
+Everything this run produced goes to the client's Waiting folder, in its own
+dated folder, and stops there. The client moves it to Approved. Nothing here
+publishes.
+
+Put the client-facing artifacts in `deliver/` inside the run directory — the approved drafts, and `reasons.json` so the agent can see what was left unworked.
+Working files stay behind — a review queue full of JSON is a review queue nobody reads.
+
+Using the Drive connector (default, no setup):
+
+```
+create_file  title: "2026-08-29 — Follow-up Drafts — week of Aug 25"
+             mimeType: "application/vnd.google-apps.folder"
+             parentId: "<the client's 01 Waiting folder id>"
+```
+
+then one `create_file` per artifact into that folder, with
+`disableConversionToGoogleType: true` to keep markdown as markdown.
+
+Full detail, including how to find the Waiting folder id once and how to clear a
+processed drop folder: [`docs/drive-delivery.md`](../../docs/drive-delivery.md).
 
 ## Setup
 

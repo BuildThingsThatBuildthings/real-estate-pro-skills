@@ -69,6 +69,7 @@ runs/{agent}/{yyyy-mm-dd}-{property-slug}/
   costs.json       4. this seller's closing costs and payoff
   net_sheet.json   4. three scenarios
   brief.md         5. seller-facing
+  deliver/          client-facing artifacts, and only these, go to Drive
   GATE.txt         6. the gate output that let it out
 ```
 
@@ -158,6 +159,29 @@ Fix the brief or the inputs, never the gate.
 The agent walks the house and sets the number from what they find. If the seller has already
 consulted a chatbot — increasingly they have — run `/chatgpt-said` against the computed comp set
 and fold the reconciliation in as a section.
+
+### 8. Deliver to `01 Waiting`
+
+Everything this run produced goes to the client's Waiting folder, in its own
+dated folder, and stops there. The client moves it to Approved. Nothing here
+publishes.
+
+Put the client-facing artifacts in `deliver/` inside the run directory — `brief.md`, and the net sheet if the seller wants the line items.
+Working files stay behind — a review queue full of JSON is a review queue nobody reads.
+
+Using the Drive connector (default, no setup):
+
+```
+create_file  title: "2026-08-29 — Pricing Brief — 412 Maple Ridge Dr"
+             mimeType: "application/vnd.google-apps.folder"
+             parentId: "<the client's 01 Waiting folder id>"
+```
+
+then one `create_file` per artifact into that folder, with
+`disableConversionToGoogleType: true` to keep markdown as markdown.
+
+Full detail, including how to find the Waiting folder id once and how to clear a
+processed drop folder: [`docs/drive-delivery.md`](../../docs/drive-delivery.md).
 
 ## Setup
 

@@ -21,18 +21,42 @@ operating manual Claude follows.
 
 More skills will be added.
 
-## Quick start
+## Install
+
+In Claude Code, two lines:
+
+```
+/plugin marketplace add BuildThingsThatBuildthings/real-estate-pro-skills
+```
+
+```
+/plugin install real-estate-skills@real-estate-pro-skills
+```
+
+That is the whole install. All six skills are available immediately — just ask for one
+by name, or say what you want ("price this listing", "who should I follow up with").
+
+Nothing here needs configuring to try. Three of the six — `chatgpt-said`, `sphere-signal`,
+`listing-price-brief` — run with no setup at all: no API keys, no network, no accounts.
+`content-foundry` and `post-bridge-schedule` need config before they can reach your Drive
+or your social accounts, and they will tell you exactly what is missing when you run them.
+
+Prefer not to use plugins, or not in Claude Code? `./install.sh` symlinks the same six
+skills into `~/.claude/skills`.
+
+### Then, if you want the content pipeline
 
 ```bash
-./install.sh
 cd config && cp channels.example.json channels.json \
           && cp brand.example.json brand.json \
-          && cp pipeline.example.json pipeline.json
+          && cp pipeline.example.json pipeline.json \
+          && cp clients.example.json clients.json
 python3 skills/post-bridge-schedule/scripts/pb.py accounts   # get your account ids
 python3 skills/post-bridge-schedule/scripts/doctor.py        # 18 preflight checks
 ```
 
 Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
+Where finished work goes: [docs/drive-delivery.md](docs/drive-delivery.md).
 
 ## Core model
 

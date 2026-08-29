@@ -7,7 +7,10 @@ Pull client context from Google Drive.
   drive_sync.py weekly  --client <slug> [--week 2026-W35]
   drive_sync.py all     --client <slug>          brand + weekly
   drive_sync.py inventory --client <slug>        classify what the weekly dump contains
-  drive_sync.py deliver --client <slug> --from <dir>   push a finished set to 01 Waiting
+  drive_sync.py deliver --client <slug> --from <dir> [--as <name>] [--yes]
+                                                 push a finished set to 01 Waiting
+  drive_sync.py clear   --client <slug> [--week ...] [--yes]
+                                                 archive the drop folder after processing
 
 Uses rclone, not the Drive MCP. The MCP returns file content as base64 into the
 model context, which is wrong for a folder of photos and video. rclone syncs
@@ -16,7 +19,7 @@ binaries incrementally and runs unattended.
 Brand context is synced on EVERY run because guardrails, voice and client cards
 change between weeks and stale compliance rules are the expensive kind of stale.
 """
-import argparse, json, os, subprocess, sys, shutil
+import argparse, json, os, re, subprocess, sys, shutil
 from datetime import date, datetime
 
 _HERE = os.path.dirname(os.path.realpath(__file__))
@@ -150,7 +153,18 @@ def cmd_all(a):
     cmd_weekly(a)
 
 
+def safe_folder_name(s):
+    """Drive tolerates most characters; humans scanning a folder list do not."""
+    s = re.sub(r"[\\/:*?\"<>|]", "-", (s or "").strip())
+    return re.sub(r"\s+", " ", s)[:120] or "delivery"
+
+
 def cmd_deliver(a):
+    """Push a finished set to the client's 01 Waiting folder.
+
+    EVERY asset any skill in this bundle creates lands here and nowhere else.
+    Waiting is the client's review queue -- they move it to Approved themselves.
+    Nothing in this bundle writes to Approved, and nothing publishes."""
     cfg, cl = client(a.client)
     src = os.path.abspath(os.path.expanduser(a.src))
     if not os.path.isdir(src):
@@ -158,17 +172,68 @@ def cmd_deliver(a):
     fid = cl["drive"].get("waiting_folder_id", "")
     if not fid or fid.startswith("PUT_"):
         raise SystemExit("waiting_folder_id not configured")
-    n = len(list(walk(src)))
+    files = list(walk(src))
+    n = len(files)
+    if not n:
+        raise SystemExit(f"nothing to deliver: {src} has no files")
+    # Each delivery gets its own dated folder. Loose files accumulating across
+    # weeks in one review queue is how a client stops reviewing.
+    label = safe_folder_name(a.label or f"{date.today().isoformat()} {os.path.basename(src.rstrip('/'))}")
+    remote = cfg.get("rclone_remote", "gdrive:")
     if not a.yes:
-        print(f"would upload {n} files from {src} to the client's 01 Waiting folder.")
-        print("this is visible to the client. re-run with --yes to send.")
+        print(f"would upload {n} file(s) from {src}")
+        print(f"                  to 01 Waiting / {label}")
+        for p in sorted(files)[:12]:
+            print(f"    {os.path.relpath(p, src)}")
+        if n > 12:
+            print(f"    ... and {n - 12} more")
+        print("\nthis becomes visible to the client. re-run with --yes to send.")
         return
-    cmd = ["rclone", "copy", src, cfg.get("rclone_remote", "gdrive:"),
+    cmd = ["rclone", "copy", src, f"{remote}{label}",
            "--drive-root-folder-id", fid, "--stats-one-line"]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode != 0:
         raise SystemExit("rclone failed:\n" + r.stderr[-800:])
-    print(f"delivered {n} files to 01 Waiting")
+    print(f"delivered {n} file(s) to 01 Waiting / {label}")
+    print("the client moves it to Approved. this bundle never does.")
+
+
+def cmd_clear(a):
+    """Archive the weekly drop folder in Drive once its contents are processed.
+
+    Archive, not delete. These are the client's originals -- listing photos and
+    walkthrough footage they may hold no other copy of -- and an irreversible
+    delete triggered by a script is not a risk worth the tidiness.
+
+    Refuses unless the same week has been synced locally first, so a drop folder
+    can never be cleared before anyone has actually pulled what was in it."""
+    cfg, cl = client(a.client)
+    week = a.week or date.today().strftime("%Y-W%V")
+    local = cache_dir(cfg, a.client, "weekly", week)
+    pulled = list(walk(local)) if os.path.isdir(local) else []
+    if not pulled:
+        raise SystemExit(
+            f"refusing to clear: nothing synced locally for {week}.\n"
+            f"  run first: drive_sync.py weekly --client {a.client} --week {week}\n"
+            f"  clearing a drop folder nobody has pulled would lose the client's originals.")
+    fid = cl["drive"].get("weekly_context_folder_id", "")
+    if not fid or fid.startswith("PUT_"):
+        raise SystemExit("weekly_context_folder_id not configured")
+    remote = cfg.get("rclone_remote", "gdrive:")
+    dest = f"_archive/{week}"
+    if not a.yes:
+        print(f"would archive the drop folder into: {dest}")
+        print(f"  {len(pulled)} file(s) were pulled locally for {week} -> {local}")
+        print("  nothing is deleted; files move into the archive subfolder.")
+        print("\nre-run with --yes to move them.")
+        return
+    cmd = ["rclone", "move", remote, f"{remote}{dest}",
+           "--drive-root-folder-id", fid,
+           "--exclude", "_archive/**", "--delete-empty-src-dirs", "--stats-one-line"]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode != 0:
+        raise SystemExit("rclone failed:\n" + r.stderr[-800:])
+    print(f"drop folder cleared -> _archive/{week} (nothing deleted)")
 
 
 
@@ -237,6 +302,10 @@ if __name__ == "__main__":
     g.add_argument("--week"); g.set_defaults(fn=cmd_agent_folder)
     d = sub.add_parser("deliver"); d.add_argument("--client", required=True)
     d.add_argument("--from", dest="src", required=True); d.add_argument("--yes", action="store_true")
+    d.add_argument("--as", dest="label", help="folder name inside 01 Waiting; defaults to date + source dir")
     d.set_defaults(fn=cmd_deliver)
+    cl_ = sub.add_parser("clear"); cl_.add_argument("--client", required=True)
+    cl_.add_argument("--week"); cl_.add_argument("--yes", action="store_true")
+    cl_.set_defaults(fn=cmd_clear)
     args = ap.parse_args()
     args.fn(args)

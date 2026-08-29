@@ -1,0 +1,27 @@
+{
+  "name": "real-estate-pro-skills",
+  "owner": {
+    "name": "BuildThingsThatBuildthings",
+    "url": "https://github.com/BuildThingsThatBuildthings/real-estate-pro-skills"
+  },
+  "metadata": {
+    "description": "Claude Code skills for real estate professionals and the operators who support them",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "real-estate-skills",
+      "description": "All six skills: brand-locked content production, analytics-driven scheduling, brand voice, client-AI reconciliation, database follow-up, and comp-backed pricing briefs. Config-driven, no vendor lock-in, nothing publishes on its own.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/content-foundry",
+        "./skills/post-bridge-schedule",
+        "./skills/brand-voice",
+        "./skills/chatgpt-said",
+        "./skills/sphere-signal",
+        "./skills/listing-price-brief"
+      ]
+    }
+  ]
+}
