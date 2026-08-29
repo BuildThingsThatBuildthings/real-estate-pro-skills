@@ -1,0 +1,16 @@
+{
+  "_comment": "Rates and amounts for one market and one brokerage. Nothing here is a default anywhere else. Confirm every line with the agent and their title company.",
+  "listing_side_commission_pct": 3.0,
+  "buyer_side_commission_pct": 3.0,
+  "_commission_note": "Post-settlement, buyer-side compensation is negotiated and disclosed separately and is not advertised on the MLS. Set it to what THIS seller has agreed to offer, or 0 if nothing is offered.",
+  "title_and_settlement": 1200.0,
+  "owners_title_policy_pct": 0.55,
+  "transfer_tax_pct": 0.37,
+  "recording_and_misc": 150.0,
+  "home_warranty": 0.0,
+  "seller_concessions_pct": 0.0,
+  "repairs_allowance": 0.0,
+  "prorated_taxes": 1450.0,
+  "hoa_transfer": 0.0,
+  "mortgage_payoff": 214300.0
+}

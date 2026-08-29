@@ -1,0 +1,272 @@
+{
+  "schema": "listing-price-brief/adjusted/v1",
+  "as_of": "2026-08-29",
+  "rates_source": "tests/fixtures/pass/rates.json",
+  "rates": {
+    "sqft": 85.0,
+    "beds": 5000.0,
+    "baths": 7500.0,
+    "garage": 6000.0,
+    "lot_sqft": 2.0,
+    "year_built": 600.0,
+    "condition": 15000.0,
+    "market_trend_pct_per_month": 0.15,
+    "max_net_adjustment_pct": 25.0,
+    "min_comps": 3,
+    "present_round_to": 1000.0,
+    "_comment": "Paired-sales derived for 37172, 2026-08. Replace per market."
+  },
+  "subject": {
+    "address": "412 Maple Ridge Dr",
+    "sqft": 2400,
+    "beds": 4,
+    "baths": 2.5,
+    "garage": 2,
+    "lot_sqft": 10500,
+    "year_built": 1998,
+    "condition": "good"
+  },
+  "included": [
+    {
+      "comp_id": "K01",
+      "address": "118 Bellwood Ct",
+      "close_price": 498000.0,
+      "close_date": "2026-06-12",
+      "ledger": [
+        {
+          "feature": "sqft",
+          "subject": 2400,
+          "comp": 2310.0,
+          "rate": 85.0,
+          "dollars": 7650.0,
+          "how": "(2400 - 2310.0) x 85.0"
+        },
+        {
+          "feature": "lot_sqft",
+          "subject": 10500,
+          "comp": 10890.0,
+          "rate": 2.0,
+          "dollars": -780.0,
+          "how": "(10500 - 10890.0) x 2.0"
+        },
+        {
+          "feature": "year_built",
+          "subject": 1998,
+          "comp": 1996.0,
+          "rate": 600.0,
+          "dollars": 1200.0,
+          "how": "(1998 - 1996.0) x 600.0"
+        },
+        {
+          "feature": "condition",
+          "subject": "good",
+          "comp": "average",
+          "rate": 15000.0,
+          "dollars": 15000.0,
+          "how": "(3 - 2 grade steps) x 15000.0"
+        },
+        {
+          "feature": "time",
+          "subject": "2026-08-29",
+          "comp": "2026-06-12",
+          "rate": 0.15,
+          "dollars": 1911.18,
+          "how": "498000.0 x 0.15%/mo x 2.56 mo"
+        }
+      ],
+      "gross_adjustment": 26541.18,
+      "net_adjustment": 24981.18,
+      "net_adjustment_pct": 5.02,
+      "adjusted_value": 522981.18,
+      "problems": []
+    },
+    {
+      "comp_id": "K02",
+      "address": "243 Kestrel Ln",
+      "close_price": 512500.0,
+      "close_date": "2026-05-28",
+      "ledger": [
+        {
+          "feature": "sqft",
+          "subject": 2400,
+          "comp": 2455.0,
+          "rate": 85.0,
+          "dollars": -4675.0,
+          "how": "(2400 - 2455.0) x 85.0"
+        },
+        {
+          "feature": "baths",
+          "subject": 2.5,
+          "comp": 3.0,
+          "rate": 7500.0,
+          "dollars": -3750.0,
+          "how": "(2.5 - 3.0) x 7500.0"
+        },
+        {
+          "feature": "lot_sqft",
+          "subject": 10500,
+          "comp": 11200.0,
+          "rate": 2.0,
+          "dollars": -1400.0,
+          "how": "(10500 - 11200.0) x 2.0"
+        },
+        {
+          "feature": "year_built",
+          "subject": 1998,
+          "comp": 2001.0,
+          "rate": 600.0,
+          "dollars": -1800.0,
+          "how": "(1998 - 2001.0) x 600.0"
+        },
+        {
+          "feature": "time",
+          "subject": "2026-08-29",
+          "comp": "2026-05-28",
+          "rate": 0.15,
+          "dollars": 2331.5,
+          "how": "512500.0 x 0.15%/mo x 3.03 mo"
+        }
+      ],
+      "gross_adjustment": 13956.5,
+      "net_adjustment": -9293.5,
+      "net_adjustment_pct": 1.81,
+      "adjusted_value": 503206.5,
+      "problems": []
+    },
+    {
+      "comp_id": "K03",
+      "address": "87 Harlow Dr",
+      "close_price": 486000.0,
+      "close_date": "2026-07-09",
+      "ledger": [
+        {
+          "feature": "sqft",
+          "subject": 2400,
+          "comp": 2180.0,
+          "rate": 85.0,
+          "dollars": 18700.0,
+          "how": "(2400 - 2180.0) x 85.0"
+        },
+        {
+          "feature": "beds",
+          "subject": 4,
+          "comp": 3.0,
+          "rate": 5000.0,
+          "dollars": 5000.0,
+          "how": "(4 - 3.0) x 5000.0"
+        },
+        {
+          "feature": "lot_sqft",
+          "subject": 10500,
+          "comp": 9800.0,
+          "rate": 2.0,
+          "dollars": 1400.0,
+          "how": "(10500 - 9800.0) x 2.0"
+        },
+        {
+          "feature": "year_built",
+          "subject": 1998,
+          "comp": 1994.0,
+          "rate": 600.0,
+          "dollars": 2400.0,
+          "how": "(1998 - 1994.0) x 600.0"
+        },
+        {
+          "feature": "condition",
+          "subject": "good",
+          "comp": "average",
+          "rate": 15000.0,
+          "dollars": 15000.0,
+          "how": "(3 - 2 grade steps) x 15000.0"
+        },
+        {
+          "feature": "time",
+          "subject": "2026-08-29",
+          "comp": "2026-07-09",
+          "rate": 0.15,
+          "dollars": 1207.98,
+          "how": "486000.0 x 0.15%/mo x 1.66 mo"
+        }
+      ],
+      "gross_adjustment": 43707.98,
+      "net_adjustment": 43707.98,
+      "net_adjustment_pct": 8.99,
+      "adjusted_value": 529707.98,
+      "problems": []
+    },
+    {
+      "comp_id": "K05",
+      "address": "355 Quarry Bend",
+      "close_price": 505750.0,
+      "close_date": "2026-08-02",
+      "ledger": [
+        {
+          "feature": "sqft",
+          "subject": 2400,
+          "comp": 2390.0,
+          "rate": 85.0,
+          "dollars": 850.0,
+          "how": "(2400 - 2390.0) x 85.0"
+        },
+        {
+          "feature": "lot_sqft",
+          "subject": 10500,
+          "comp": 10400.0,
+          "rate": 2.0,
+          "dollars": 200.0,
+          "how": "(10500 - 10400.0) x 2.0"
+        },
+        {
+          "feature": "year_built",
+          "subject": 1998,
+          "comp": 1999.0,
+          "rate": 600.0,
+          "dollars": -600.0,
+          "how": "(1998 - 1999.0) x 600.0"
+        },
+        {
+          "feature": "time",
+          "subject": "2026-08-29",
+          "comp": "2026-08-02",
+          "rate": 0.15,
+          "dollars": 672.89,
+          "how": "505750.0 x 0.15%/mo x 0.89 mo"
+        }
+      ],
+      "gross_adjustment": 2322.89,
+      "net_adjustment": 1122.89,
+      "net_adjustment_pct": 0.22,
+      "adjusted_value": 506872.89,
+      "problems": []
+    }
+  ],
+  "excluded": [
+    {
+      "comp_id": "K04",
+      "address": "1502 Ridgecrest Way",
+      "close_price": 561000.0,
+      "close_date": "2026-04-18",
+      "reason": "new construction backing the golf course; not comparable to a 1998 interior lot"
+    },
+    {
+      "comp_id": "K06",
+      "address": "9 Old Mill Rd",
+      "close_price": 402000.0,
+      "close_date": "2025-02-14",
+      "reason": "estate sale sold as-is, and outside the 12-month window"
+    }
+  ],
+  "min_comps": 3,
+  "enough_comps": true,
+  "range": {
+    "low": 503206.5,
+    "high": 529707.98,
+    "median": 514927.04,
+    "supported_low": 504123.1,
+    "supported_high": 528026.28,
+    "n": 4,
+    "supported_low_rounded": 504000.0,
+    "supported_high_rounded": 528000.0,
+    "median_rounded": 515000.0
+  }
+}

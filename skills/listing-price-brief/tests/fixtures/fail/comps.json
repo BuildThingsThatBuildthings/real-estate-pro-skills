@@ -1,0 +1,61 @@
+{
+  "schema": "listing-price-brief/comps/v1",
+  "tier": "export",
+  "acquired_from": "comps-export.csv",
+  "acquired_at": "2026-08-29",
+  "comp_count": 3,
+  "included": 1,
+  "comps": [
+    {
+      "comp_id": "K01",
+      "address": "118 Bellwood Ct",
+      "close_price": 498000.0,
+      "close_date": "2026-06-12",
+      "sqft": 2310.0,
+      "beds": 4.0,
+      "baths": 2.5,
+      "garage": 2.0,
+      "lot_sqft": 10890.0,
+      "year_built": 1996.0,
+      "condition": "average",
+      "distance_mi": 0.3,
+      "dom": 34.0,
+      "exclude": false,
+      "exclude_reason": ""
+    },
+    {
+      "comp_id": "K02",
+      "address": "1502 Ridgecrest Way",
+      "close_price": 561000.0,
+      "close_date": "2026-04-18",
+      "sqft": 2520.0,
+      "beds": 4.0,
+      "baths": 3.0,
+      "garage": 3.0,
+      "lot_sqft": 14500.0,
+      "year_built": 2019.0,
+      "condition": "excellent",
+      "distance_mi": 0.6,
+      "dom": 15.0,
+      "exclude": true,
+      "exclude_reason": ""
+    },
+    {
+      "comp_id": "K03",
+      "address": "9 Old Mill Rd",
+      "close_price": 402000.0,
+      "close_date": "2025-02-14",
+      "sqft": 2200.0,
+      "beds": 4.0,
+      "baths": 2.0,
+      "garage": 1.0,
+      "lot_sqft": 9600.0,
+      "year_built": 1991.0,
+      "condition": "fair",
+      "distance_mi": 1.4,
+      "dom": 88.0,
+      "exclude": true,
+      "exclude_reason": ""
+    }
+  ]
+}

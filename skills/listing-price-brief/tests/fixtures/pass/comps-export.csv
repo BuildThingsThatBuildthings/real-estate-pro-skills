@@ -1,0 +1,7 @@
+Full Address,Sold Price,Sale Date,Living Area,Bedrooms,Total Baths,Garage Spaces,Lot Size,Year Built,Condition,Distance,DOM,Exclude,Exclude Reason
+118 Bellwood Ct,"$498,000",2026-06-12,2310,4,2.5,2,10890,1996,average,0.3,34,,
+243 Kestrel Ln,"$512,500",2026-05-28,2455,4,3,2,11200,2001,good,0.4,22,,
+87 Harlow Dr,"$486,000",2026-07-09,2180,3,2.5,2,9800,1994,average,0.5,41,,
+1502 Ridgecrest Way,"$561,000",2026-04-18,2520,4,3,3,14500,2019,excellent,0.6,15,x,new construction backing the golf course; not comparable to a 1998 interior lot
+355 Quarry Bend,"$505,750",2026-08-02,2390,4,2.5,2,10400,1999,good,0.2,28,,
+9 Old Mill Rd,"$402,000",2025-02-14,2200,4,2,1,9600,1991,fair,1.4,88,x,"estate sale sold as-is, and outside the 12-month window"

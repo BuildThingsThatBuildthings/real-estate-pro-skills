@@ -14,6 +14,7 @@ into `~/.claude/skills`. No account ids, brand names or machine paths are hardco
 | [`brand-voice`](skills/brand-voice/) | Loads a brand's voice pack before any public facing copy is written, and audits the draft against it. |
 | [`chatgpt-said`](skills/chatgpt-said/) | Your client brought their own AI. Splits what the chatbot told them into individually checkable claims, classes each one against your record, and gates the reply: no dropped claim, no untraceable number, no arguing with the client, legal and tax questions referred not answered. |
 | [`sphere-signal`](skills/sphere-signal/) | Who in your database has a real, dated reason to hear from you this week. Computes reasons from your own records — an unkept promise, an unanswered question, an anniversary, a holding period, dormancy — drafts the touch, and refuses any touch with no reason, no consent, an unearned ask, or an inference about who someone is. Never sends. |
+| [`listing-price-brief`](skills/listing-price-brief/) | A seller-ready pricing brief from real comps: supported range, per-comp adjustment ledger, named exclusions, and a net sheet at three prices. Python computes every number; the model only writes narrative over them, and the gate refuses any figure it cannot trace. |
 
 Each skill has its own README explaining the practices behind it, and a `SKILL.md` that is the
 operating manual Claude follows.
@@ -84,10 +85,22 @@ says nothing publishes on its own.
 sends nothing. `sphere-signal` **notices** — it decides who has a reason to hear from you and drafts
 the touch, and also sends nothing.
 
-Both import `content-foundry`'s Fair Housing gate rather than copying it, so there is exactly one
-copy of those rules in the bundle. Together they close a loop: `sphere-signal` finds the reason,
-`content-foundry` makes the thing worth sending, `post-bridge-schedule` schedules it when the client
-bought posting, and `chatgpt-said` handles the client who shows up with their own AI.
+`listing-price-brief` **computes** — Python owns every number in a pricing brief and the model only
+writes narrative over them.
+
+All three import `content-foundry`'s Fair Housing gate rather than copying it, so there is exactly
+one copy of those rules in the bundle. Together they close a loop:
+
+```
+sphere-signal      who has a reason to hear from you this week
+content-foundry    make the thing that is worth sending
+post-bridge-schedule   schedule it, if the client bought posting
+listing-price-brief    the appointment: supported range, ledger, net sheet
+chatgpt-said       the client who showed up with their own AI
+```
+
+None of them send anything on their own. `post-bridge-schedule` is the only skill that writes
+outward, and only for a client who bought posting, and only from work already approved.
 
 ## Before you trust a write
 

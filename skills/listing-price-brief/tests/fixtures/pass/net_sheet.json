@@ -1,0 +1,152 @@
+{
+  "schema": "listing-price-brief/net-sheet/v1",
+  "as_of": "2026-08-29",
+  "costs_source": "tests/fixtures/pass/costs.json",
+  "supported_range": {
+    "low": 504123.1,
+    "high": 528026.28
+  },
+  "scenarios": [
+    {
+      "price": 504123.1,
+      "lines": [
+        {
+          "label": "listing side commission",
+          "basis": "3.0% of 504,123",
+          "amount": 15123.69
+        },
+        {
+          "label": "buyer side compensation offered",
+          "basis": "3.0% of 504,123",
+          "amount": 15123.69
+        },
+        {
+          "label": "owner's title policy",
+          "basis": "0.55% of 504,123",
+          "amount": 2772.68
+        },
+        {
+          "label": "transfer tax",
+          "basis": "0.37% of 504,123",
+          "amount": 1865.26
+        },
+        {
+          "label": "title and settlement fees",
+          "basis": "flat",
+          "amount": 1200.0
+        },
+        {
+          "label": "recording and misc",
+          "basis": "flat",
+          "amount": 150.0
+        },
+        {
+          "label": "prorated taxes",
+          "basis": "flat",
+          "amount": 1450.0
+        }
+      ],
+      "total_costs": 37685.32,
+      "net_before_payoff": 466437.78,
+      "mortgage_payoff": 214300.0,
+      "estimated_net_to_seller": 252137.78,
+      "price_rounded": 504000.0,
+      "total_costs_rounded": 38000.0,
+      "estimated_net_to_seller_rounded": 252000.0
+    },
+    {
+      "price": 514927.04,
+      "lines": [
+        {
+          "label": "listing side commission",
+          "basis": "3.0% of 514,927",
+          "amount": 15447.81
+        },
+        {
+          "label": "buyer side compensation offered",
+          "basis": "3.0% of 514,927",
+          "amount": 15447.81
+        },
+        {
+          "label": "owner's title policy",
+          "basis": "0.55% of 514,927",
+          "amount": 2832.1
+        },
+        {
+          "label": "transfer tax",
+          "basis": "0.37% of 514,927",
+          "amount": 1905.23
+        },
+        {
+          "label": "title and settlement fees",
+          "basis": "flat",
+          "amount": 1200.0
+        },
+        {
+          "label": "recording and misc",
+          "basis": "flat",
+          "amount": 150.0
+        },
+        {
+          "label": "prorated taxes",
+          "basis": "flat",
+          "amount": 1450.0
+        }
+      ],
+      "total_costs": 38432.95,
+      "net_before_payoff": 476494.09,
+      "mortgage_payoff": 214300.0,
+      "estimated_net_to_seller": 262194.09,
+      "price_rounded": 515000.0,
+      "total_costs_rounded": 38000.0,
+      "estimated_net_to_seller_rounded": 262000.0
+    },
+    {
+      "price": 528026.28,
+      "lines": [
+        {
+          "label": "listing side commission",
+          "basis": "3.0% of 528,026",
+          "amount": 15840.79
+        },
+        {
+          "label": "buyer side compensation offered",
+          "basis": "3.0% of 528,026",
+          "amount": 15840.79
+        },
+        {
+          "label": "owner's title policy",
+          "basis": "0.55% of 528,026",
+          "amount": 2904.14
+        },
+        {
+          "label": "transfer tax",
+          "basis": "0.37% of 528,026",
+          "amount": 1953.7
+        },
+        {
+          "label": "title and settlement fees",
+          "basis": "flat",
+          "amount": 1200.0
+        },
+        {
+          "label": "recording and misc",
+          "basis": "flat",
+          "amount": 150.0
+        },
+        {
+          "label": "prorated taxes",
+          "basis": "flat",
+          "amount": 1450.0
+        }
+      ],
+      "total_costs": 39339.42,
+      "net_before_payoff": 488686.86,
+      "mortgage_payoff": 214300.0,
+      "estimated_net_to_seller": 274386.86,
+      "price_rounded": 528000.0,
+      "total_costs_rounded": 39000.0,
+      "estimated_net_to_seller_rounded": 274000.0
+    }
+  ]
+}
