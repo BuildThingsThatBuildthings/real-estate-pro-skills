@@ -1,0 +1,147 @@
+{
+  "schema": "chatgpt-said/claims/v1",
+  "client_ai_source": "seller's ChatGPT, 2026-08-28",
+  "claim_count": 8,
+  "claims": [
+    {
+      "id": "C-02-d91b",
+      "text": "Your home is likely worth around $540,000 in the current market.",
+      "kinds": [
+        "price"
+      ],
+      "hedged": true,
+      "values": [
+        {
+          "raw": "$540,000",
+          "kind": "price",
+          "value": 540000.0
+        }
+      ],
+      "class": "contradicted",
+      "source": "MLS comp set for 37172, pulled 2026-08-28 (6 closed sales, 0.5 mi, 90 days)",
+      "correct_value": "$505,000 to $522,000",
+      "note": "The estimate leans on the two highest sales in the subdivision without adjusting for them."
+    },
+    {
+      "id": "C-03-9439",
+      "text": "Comparable homes in your area have sold for more than $525,000 over the last six months.",
+      "kinds": [
+        "price",
+        "comparative"
+      ],
+      "hedged": false,
+      "values": [
+        {
+          "raw": "$525,000",
+          "kind": "price",
+          "value": 525000.0
+        }
+      ],
+      "class": "unknowable",
+      "source": null,
+      "correct_value": null,
+      "note": "Both sales above that number back to the golf course and one was new construction in 2025. Nothing in public data flags either difference."
+    },
+    {
+      "id": "C-04-8185",
+      "text": "The property is 2,400 sq ft with 4 bedrooms and 2.5 bathrooms, built in 1998.",
+      "kinds": [
+        "area",
+        "rooms",
+        "date"
+      ],
+      "hedged": false,
+      "values": [],
+      "class": "verified",
+      "source": "Robertson County tax record, cross-checked against MLS tax data 2026-08-28",
+      "correct_value": null,
+      "note": "Every structural fact is right."
+    },
+    {
+      "id": "C-05-aa74",
+      "text": "Homes in your zip code have appreciated 8% over the past year.",
+      "kinds": [
+        "percent"
+      ],
+      "hedged": false,
+      "values": [
+        {
+          "raw": "8%",
+          "kind": "percent",
+          "value": 8.0
+        }
+      ],
+      "class": "stale",
+      "source": "County assessor series, through Q2 2026",
+      "correct_value": null,
+      "note": "That figure was accurate year-over-year through late 2025. The trailing twelve months read differently."
+    },
+    {
+      "id": "C-06-f193",
+      "text": "Average days on market is currently 21 days.",
+      "kinds": [
+        "date"
+      ],
+      "hedged": false,
+      "values": [],
+      "class": "contradicted",
+      "source": "MLS comp set for 37172, pulled 2026-08-28 (30-day trailing market stats)",
+      "correct_value": "38 days",
+      "note": "The shorter number is a national average, not this zip code."
+    },
+    {
+      "id": "C-07-2550",
+      "text": "You should list at $565,000 to leave room to negotiate.",
+      "kinds": [
+        "price",
+        "recommend"
+      ],
+      "hedged": false,
+      "values": [
+        {
+          "raw": "$565,000",
+          "kind": "price",
+          "value": 565000.0
+        }
+      ],
+      "class": "unknowable",
+      "source": null,
+      "correct_value": null,
+      "note": "A list price depends on the seller's timing, carrying costs and condition. The model was not told any of the three."
+    },
+    {
+      "id": "C-08-43b8",
+      "text": "Most sellers get about 4% below their asking price, so this positions you well.",
+      "kinds": [
+        "percent",
+        "superlative"
+      ],
+      "hedged": true,
+      "values": [
+        {
+          "raw": "4%",
+          "kind": "percent",
+          "value": 4.0
+        }
+      ],
+      "class": "verified",
+      "source": "MLS comp set for 37172, pulled 2026-08-28 (closed-to-list ratio, trailing 90 days)",
+      "correct_value": null,
+      "note": "This one matches the local record closely."
+    },
+    {
+      "id": "C-09-8b4d",
+      "text": "One more thing: you may be able to exclude the capital gains on this sale if you have lived there two of the last five years, but you should confirm that with a tax professional.",
+      "kinds": [
+        "recommend",
+        "legal_tax"
+      ],
+      "hedged": true,
+      "values": [],
+      "class": "out_of_scope",
+      "source": null,
+      "correct_value": null,
+      "note": "Capital gains treatment is a CPA question. I do not give tax advice and will not start here."
+    }
+  ]
+}

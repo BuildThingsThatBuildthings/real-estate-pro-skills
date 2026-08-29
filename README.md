@@ -12,6 +12,7 @@ into `~/.claude/skills`. No account ids, brand names or machine paths are hardco
 | [`post-bridge-schedule`](skills/post-bridge-schedule/) | Folder of finished video in, verified scheduled social records out. Derives posting windows from your own analytics, enforces a cadence ramp, detects same-channel collisions, writes one caption per channel, and verifies every write. |
 | [`content-foundry`](skills/content-foundry/) | Brand locked content production. Pulls a client's brand and weekly context from Google Drive, unifies a mixed asset dump, researches, writes a reviewable brief, generates and composites on brand assets, gates on Fair Housing and slop, and delivers a finished set to the client's `01 – Waiting` folder. |
 | [`brand-voice`](skills/brand-voice/) | Loads a brand's voice pack before any public facing copy is written, and audits the draft against it. |
+| [`chatgpt-said`](skills/chatgpt-said/) | Your client brought their own AI. Splits what the chatbot told them into individually checkable claims, classes each one against your record, and gates the reply: no dropped claim, no untraceable number, no arguing with the client, legal and tax questions referred not answered. |
 
 Each skill has its own README explaining the practices behind it, and a `SKILL.md` that is the
 operating manual Claude follows.
@@ -71,12 +72,16 @@ you run it for more than one person.
 
 `doctor.py` checks all of it.
 
-## How the two production skills relate
+## How the skills relate
 
 `content-foundry` **makes** things and delivers them for approval. It never publishes.
 `post-bridge-schedule` **schedules** things, and only for clients who bought posting, and only
 from work the client already approved. Keeping them separate is deliberate: the client agreement
 says nothing publishes on its own.
+
+`chatgpt-said` **answers** — it produces a document for the agent to use in a conversation, and
+sends nothing. It shares `content-foundry`'s Fair Housing gate by importing it rather than copying
+it, so there is exactly one copy of those rules in the bundle.
 
 ## Before you trust a write
 
