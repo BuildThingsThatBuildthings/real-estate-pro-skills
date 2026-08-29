@@ -1,8 +1,18 @@
 __pycache__/
 *.pyc
 .DS_Store
+
+# Local configuration. Copy the .example.json files and fill in your own values.
+config/channels.json
+config/brand.json
+config/pipeline.json
+*.local.json
+
+# Per-batch working artifacts
 batch.json
+batch-scaffold.json
 media-manifest.tsv
 transcripts/
 gmb/
-*.local.json
+captions/
+SCHEDULE-REVIEW.md

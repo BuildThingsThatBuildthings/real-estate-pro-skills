@@ -16,10 +16,13 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
 API = "https://api.post-bridge.com/v1"
-VIEW_RELIABLE = {"youtube", "tiktok", "facebook"}
-MIN_N = 8           # ignore hours with too little evidence
-RUNG_SIZES = {3: 3, 5: 5, 7: 7, 8: 8}
-FORBIDDEN = {0, 1, 2, 3, 4, 5, 6, 7, 22, 23}   # never schedule overnight
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.realpath(__file__)))
+import config as _cfg
+VIEW_RELIABLE = set(_cfg.VIEW_RELIABLE)
+MIN_N = _cfg.MIN_RECORDS_PER_HOUR   # ignore hours with too little evidence
+RUNG_SIZES = {r: r for r in _cfg.RUNGS}
+FORBIDDEN = set(_cfg.FORBIDDEN_HOURS)   # never schedule overnight
 
 
 def ct(d):
@@ -75,7 +78,7 @@ def score(rs):
         ln, _, lm, _ = lh.get(h, (0, 0, 0, 0))
         if vn < MIN_N and ln < MIN_N:
             continue
-        s = 0.75 * (vm / vmax) + 0.25 * (lm / lmax)
+        s = _cfg.VIEW_WEIGHT * (vm / vmax) + _cfg.LIKE_WEIGHT * (lm / lmax)
         out[h] = dict(score=round(s, 3), n_views=vn, mean_views=round(vm, 1),
                       n_likes=ln, mean_likes=round(lm, 2))
     return dict(sorted(out.items(), key=lambda x: -x[1]["score"]))

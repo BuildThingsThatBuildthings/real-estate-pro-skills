@@ -17,10 +17,10 @@ from datetime import datetime, timedelta, timezone
 
 API = "https://api.post-bridge.com/v1"
 import sys as _sys, os as _os
-_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
-from channels import NAME as _CH_NAME, GBP as _CH_GBP, MIN_GAP as _CH_GAP
-NAME = dict(_CH_NAME)
-MIN_GAP = _CH_GAP
+_sys.path.insert(0, _os.path.dirname(_os.path.realpath(__file__)))
+import config as _cfg
+NAME = dict(_cfg.NAME)
+MIN_GAP = _cfg.MIN_GAP
 LADDER = ["11:15", "13:20", "15:00", "20:30", "12:00", "18:00", "10:00", "09:15"]
 
 

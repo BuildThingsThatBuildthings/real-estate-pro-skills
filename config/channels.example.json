@@ -1,0 +1,22 @@
+{
+  "_comment": "The channel set every post fans out to. One post = one record = one content unit per channel. Copy to channels.json and fill in your own Post Bridge account ids from `list_social_accounts`.",
+  "profile": "example",
+  "min_gap_minutes": 90,
+  "image_only_platforms": ["google_business"],
+  "video_required_platforms": ["youtube"],
+  "channels": {
+    "100001": { "label": "ig/brand-a", "platform": "instagram",       "brand": "Brand A" },
+    "100002": { "label": "fb/brand-a", "platform": "facebook",        "brand": "Brand A" },
+    "100003": { "label": "yt/brand-a", "platform": "youtube",         "brand": "Brand A" },
+    "100004": { "label": "x/brand-a",  "platform": "twitter",         "brand": "Brand A" },
+    "100005": { "label": "li/brand-a", "platform": "linkedin",        "brand": "Brand A" },
+    "100006": { "label": "gbp/brand-a","platform": "google_business", "brand": "Brand A" },
+    "100007": { "label": "fb/brand-b", "platform": "facebook",        "brand": "Brand B" },
+    "100008": { "label": "ig/brand-b", "platform": "instagram",       "brand": "Brand B" },
+    "100009": { "label": "tt/brand-b", "platform": "tiktok",          "brand": "Brand B" }
+  },
+  "out_of_scope": {
+    "_comment": "Connected accounts this profile deliberately never posts to. Optional.",
+    "100010": "some-other-brand"
+  }
+}

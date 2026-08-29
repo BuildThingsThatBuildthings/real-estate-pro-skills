@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Post Bridge scheduling engine for the AIA + BT2 channel set.
+Post Bridge scheduling engine. Channel set comes from config/channels.json.
 
   status                 current posts/day per 30-day block, next rung, gaps
   collisions             same-channel collisions in the live calendar
@@ -15,11 +15,11 @@ from datetime import datetime, timedelta, timezone, date
 
 API = "https://api.post-bridge.com/v1"
 import sys as _sys, os as _os
-_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
-from channels import NAME as _CH_NAME, GBP as _CH_GBP, MIN_GAP as _CH_GAP
-CHANNELS = dict(_CH_NAME)
+_sys.path.insert(0, _os.path.dirname(_os.path.realpath(__file__)))
+import config as _cfg
+CHANNELS = dict(_cfg.NAME)
 N_CH = len(CHANNELS)
-RUNGS = [3, 5, 7, 8]
+RUNGS = list(_cfg.RUNGS)
 def _derived_slots():
     """Slot ladder derived from live analytics. Falls back to the last
     known-good ladder if analytics are unavailable."""
@@ -38,9 +38,9 @@ def _derived_slots():
 
 
 SLOTS = _derived_slots()
-FORBIDDEN_HOURS = {17, 19, 21, 6, 7, 22, 23, 0, 1, 2, 3, 4, 5}
-MIN_GAP_MIN = _CH_GAP
-BLOCK = 30
+FORBIDDEN_HOURS = set(_cfg.FORBIDDEN_HOURS)
+MIN_GAP_MIN = _cfg.MIN_GAP
+BLOCK = _cfg.BLOCK_DAYS
 
 
 def ct_offset(d):

@@ -1,0 +1,16 @@
+{
+  "_comment": "Brand tokens for generated assets and default CTAs. Copy to brand.json.",
+  "name": "Your Brand",
+  "lockup_text": "YOUR BRAND",
+  "site_url": "https://example.com",
+  "cta": { "action_type": "LEARN_MORE", "url": "https://example.com" },
+  "card": {
+    "ink": "#0B0B0C",
+    "accent": "#F5A524",
+    "width": 1200,
+    "height": 1200,
+    "frame_height": 600,
+    "font_bold": "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+    "font_regular": "/System/Library/Fonts/Supplemental/Arial.ttf"
+  }
+}

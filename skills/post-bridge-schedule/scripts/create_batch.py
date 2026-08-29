@@ -14,9 +14,9 @@ batch.json:
       "video_media_id": "...",
       "gmb_media_id": "...",
       "youtube_title": "...",
-      "twitter_first_comment": "https://aiacceleration.ai",
-      "gbp_cta_url": "https://aiacceleration.ai",
-      "captions": { "72366": "...", "75846": "...", ... all 9 ... }
+      "twitter_first_comment": "<optional link>",
+      "gbp_cta_url": "<optional, defaults to brand.json cta.url>",
+      "captions": { "<account_id>": "...", "...": "one entry per configured channel" }
     }
   ]
 }
@@ -27,11 +27,11 @@ from collections import defaultdict
 
 API = "https://api.post-bridge.com/v1"
 import sys as _sys, os as _os
-_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
-from channels import NAME as _CH_NAME, GBP as _CH_GBP, MIN_GAP as _CH_GAP
-CHANNELS = dict(_CH_NAME)
-GBP = _CH_GBP
-MIN_GAP_MIN = _CH_GAP
+_sys.path.insert(0, _os.path.dirname(_os.path.realpath(__file__)))
+import config as _cfg
+CHANNELS = dict(_cfg.NAME)
+GBP = _cfg.GBP
+MIN_GAP_MIN = _cfg.MIN_GAP
 def _allowed_ct():
     """Allowed slots come from the SAME derived ladder the planner uses.
     Hardcoding here lets lint and planner disagree, which rejects valid slots."""
@@ -144,8 +144,8 @@ def build(p):
            for a in CHANNELS]
     pc = {
         "youtube": {"title": p["youtube_title"]},
-        "google_business": {"cta_action_type": "LEARN_MORE",
-                            "cta_url": p.get("gbp_cta_url", "https://aiacceleration.ai"),
+        "google_business": {"cta_action_type": _cfg.CTA.get("action_type", "LEARN_MORE"),
+                            "cta_url": p.get("gbp_cta_url") or _cfg.CTA.get("url", ""),
                             "media": [p["gmb_media_id"]]},
     }
     if p.get("twitter_first_comment"):
@@ -159,7 +159,8 @@ def build(p):
         pc["instagram"] = {"video_cover_timestamp_ms": cover_ms}
     pc["tiktok"] = {"video_cover_timestamp_ms": cover_ms}
     return {
-        "caption": caps[72366],
+        # top level caption is only a fallback; every channel has its own.
+        "caption": caps[next(iter(CHANNELS))],
         "social_accounts": list(CHANNELS),
         "account_configurations": {"account_configurations": cfg},
         "platform_configurations": pc,

@@ -1,215 +1,194 @@
 ---
 name: post-bridge-schedule
-description: End to end productized posting pipeline for Ryan's AI Acceleration and Build Things That Build Things channels via Post Bridge. Takes a folder of finished video and carries it all the way to verified scheduled records: inventory, transcription, claim verification, brand voice, analytics-derived posting windows, ramp planning, collision detection, per-channel captions, GBP card generation, preflight lint, approval gate, creation, and post-create repair. Use when scheduling a batch of finished content, filling or ramping the calendar, auditing schedule health, or repairing collisions. Triggers on "/post-bridge-schedule", "schedule this batch", "fill the calendar", "ramp the schedule", "post this content", "how full is the calendar", "check the schedule", or a folder of finished video dropped for posting.
+description: End to end posting pipeline for Post Bridge. Takes a folder of finished video and carries it to verified scheduled records: inventory, transcription, claim verification, brand voice, analytics-derived posting windows, ramp planning, collision detection, per-channel captions, image card generation, preflight lint, approval gate, creation, and post-create repair. Channel set, cadence and copy rules all come from config. Use when scheduling a batch of finished content, filling or ramping a posting calendar, auditing schedule health, or repairing collisions and duplicate destinations. Triggers on "/post-bridge-schedule", "schedule this batch", "fill the calendar", "ramp the schedule", "post this content", "how full is the calendar", "check the schedule", or a folder of finished video dropped for posting.
 ---
 
-# Post Bridge — productized posting pipeline
+# Post Bridge posting pipeline
 
-Composes with the `post-bridge` skill, which owns auth, the CLI and raw API calls.
-This skill owns the **process**: what a post is, where it goes, when it fires, and how
-you prove it landed.
+A folder of finished video goes in. Verified scheduled records come out.
 
-## Vocabulary — use these words, no others
+Everything specific to a person or a business lives in `config/`. Nothing is hardcoded.
+
+## Vocabulary
 
 - **Post** — one content concept, built around one creative.
-- **Content unit** — one channel-specific instance of that post. 9 channels = 9 units.
+- **Content unit** — one channel-specific instance of that post. N channels means N units.
 
-There is no third thing. Never invent one. A Post Bridge **record** is the database row.
+There is no third thing. Do not invent one. A Post Bridge **record** is the database row.
 **One post must be exactly one record.**
 
-## The 9 channels (locked)
+## Configuration
 
-| account_id | Channel | Brand |
-|---|---|---|
-| 72366 | `ig/AIA-RE` | AI Acceleration: Real Estate |
-| 75846 | `fb/AIA-RE` | AI Acceleration: Real Estate |
-| 75843 | `yt/AIA-RE` | AI Acceleration: Real Estate |
-| 72367 | `x/AIA` | AI Acceleration |
-| 72370 | `li/AIA` | AI Acceleration |
-| 75850 | `gbp/AIA` | AI Acceleration |
-| 75848 | `fb/BT2` | Build Things That Build Things |
-| 75841 | `ig/BT2` | Build Things That Build Things |
-| 75844 | `tt/BT2` | Build Things That Build Things |
+| File | Holds |
+|---|---|
+| `config/channels.json` | the channel set, min gap, which platforms are image only |
+| `config/brand.json` | brand name, lockup, colours, fonts, default call to action |
+| `config/pipeline.json` | ramp rungs, window scoring, timezone, tool paths, copy rules |
+| `config/voice/<brand>.md` | voice packs, read by the `brand-voice` skill |
 
-**Out of scope unless explicitly named:** MetL (72371/72372/72369/72373/80485),
-Human Creation Collective (75845/75840), `li/Ryan Wanner` (80927), `x/AIAcceleration0` (80505).
+Copy each `.example.json` and fill it in. `scripts/doctor.py` verifies the whole environment.
+
+**Run `doctor.py` first on any new machine or profile.** It checks config, binaries,
+API reachability, that every configured channel actually exists on the account, whether any
+channel needs reconnecting, and whether there is enough analytics history to derive windows.
 
 ---
 
-# THE PROCESS — run these steps in order
+# THE PROCESS
+
+## Step 0. Environment
+
+```bash
+python3 scripts/doctor.py
+```
+
+Do not continue past a failing check.
 
 ## Step 1. Inventory the batch
 
 ```bash
-cd <batch folder>
-ls -l *.mp4
 for f in *.mp4; do ffprobe -hide_banner -loglevel quiet \
   -show_entries format=duration -select_streams v:0 \
   -show_entries stream=width,height -of csv=p=0 "$f"; done
 ```
 
-Establish: how many **posts** (distinct concepts), and which files are alternate cuts of the
-same concept rather than new posts. Loop or `-h` variants of the same numbered clip are
-alternates, not posts. State the post count explicitly before going further.
+Establish how many **posts** exist. Alternate cuts of the same concept are not separate
+posts. State the count before continuing.
 
-Check channel eligibility from the specs:
-- **YouTube** needs exactly 1 video. **Google Business rejects video entirely** and takes a
-  single image. **TikTok** takes video or images. Vertical 1080x1920 is fine everywhere else.
+Then check eligibility per platform. Two constraints decide the shape of every record:
+- Platforms in `video_required_platforms` need a video.
+- Platforms in `image_only_platforms` reject video entirely and need a still.
 
-## Step 2. Transcribe. Do not write captions from filenames.
+## Step 2. Transcribe
 
 ```bash
-ffmpeg -nostdin -v error -y -i "$f" -ar 16000 -ac 1 -c:a pcm_s16le /tmp/w.wav
-whisper-cli -m /Users/ryan/brand_captions/remotion/whisper.cpp/ggml-medium.en.bin \
-  -f /tmp/w.wav -nt -np
+tools/transcribe.sh <batch folder>
 ```
 
-Write to `transcripts/<slug>.txt`. Captions written from filenames invent claims Ryan never
-made. This step is not optional.
+Captions written from filenames invent claims nobody made. This step is not optional.
 
-**ffmpeg eats stdin inside a read loop.** Always pass `-nostdin` and `</dev/null`, or
-filenames get truncated mid-loop and files silently fail.
+`ffmpeg` consumes stdin inside a read loop and truncates filenames. `-nostdin` and
+`</dev/null` are mandatory. The tool already does this.
 
-## Step 3. Verify every factual claim
+## Step 3. Verify claims
 
-Any statistic in the transcript gets a WebSearch before it reaches a caption. Ryan's own
-rule: research the claim and credential it with a real source rather than hedging or
-dropping it. If the verified figure differs from what he said on camera, **use the verified
-figure with attribution** and tell him about the delta.
+Every statistic in a transcript gets checked before it reaches a caption. Research it and
+credential it with a real source rather than hedging or dropping it. If the verified figure
+differs from what was said on camera, **use the verified figure with attribution** and say
+so out loud.
 
 ## Step 4. Load brand voice
 
-```bash
-node /Users/ryan/ryan_ops/scripts/load-entity-bundle.mjs bt2
-node /Users/ryan/ryan_ops/scripts/load-entity-bundle.mjs aia
-```
+Use the `brand-voice` skill. Load the pack for each brand in the channel set before writing
+anything. Channels map to brands through the `brand` field in `config/channels.json`.
 
-Read the tier-1 `about-me.md` and `voice.md` for both. AIA channels speak to real estate
-agents. BT2 channels speak to founders and operators at 25 to 500 employees. **The same
-video gets a different frame on each brand.** That is the entire point of per-channel captions.
+One creative, written once per audience. A post going to two brands is written twice, in two
+voices, not copied.
 
-Universal rules that override canon voice files:
-- **No hashtags. Ever.** Embed keywords in prose.
-- **No dashes in post copy.** No em dashes, en dashes, or compound hyphens inside captions.
-  Proper nouns like T-Mobile are the only exception.
-- **No social proof credentials inside content.**
-- **Movement CTAs.** "See the Real Estate track", never "book a call" or "learn more".
-- Members and adapters, never students, users, or customers.
+`config/voice/_RULES.md` outranks any individual pack. When they disagree, the shared rules
+win and the conflict gets flagged so one of the two is fixed.
 
-Known conflict: AIA `voice.md` still says "3-5 hashtags" for IG and TikTok. The feedback
-rules win. Flag it each run until the canon file is fixed.
-
-## Step 5. Derive posting windows from live analytics
+## Step 5. Derive posting windows from your own analytics
 
 ```bash
 python3 scripts/windows.py report     # hour and weekday performance, ranked
-python3 scripts/windows.py ladder     # the slot ladder for rungs 3/5/7/8
+python3 scripts/windows.py ladder     # the slot ladder per rung
 ```
 
-**Do not hardcode slots.** `windows.py` pulls every analytics record, scores each hour with
-a blend of mean views on the view-reliable platforms and mean Instagram likes, and emits the
-ladder. Re-derive every run; the ranking moves.
+**Never hardcode slots.** `windows.py` reads every analytics record, scores each hour by a
+weighted blend of views on view-reliable platforms and likes on like-signal platforms, drops
+hours with too little evidence, excludes the configured forbidden hours, and emits the
+ladder. Re-derive every run. The ranking moves as the account grows.
 
-Measurement caveats it already handles:
-- Post Bridge syncs analytics for **TikTok, YouTube, Instagram, Facebook only**. X, LinkedIn
-  and Google Business return nothing, so a third of the channel set cannot inform timing.
-- Instagram feed photos report 0 views. Views come from yt/tt/fb; Instagram contributes likes.
-- Hours with fewer than 8 records are excluded as noise.
-- Overnight hours are excluded outright.
+What it already accounts for:
+- Post Bridge syncs analytics for a **subset of platforms only**. Configure which in
+  `windows.view_reliable_platforms`. Anything outside that set cannot inform timing, and on a
+  typical set that is a third of the channels.
+- Some platforms report 0 views for image posts. Those contribute through likes instead.
+- Hours below `min_records_per_hour` are noise and are excluded.
 
-Weight strong creative toward the best weekdays from `windows.py report`.
-
-## Step 6. Read the current calendar and the ramp
+## Step 6. Read the calendar and the ramp
 
 ```bash
 python3 scripts/schedule_engine.py status
 ```
 
-Reports live records, content units, posts per day per 30-day block, and the gap to each rung.
-`posts/day = content units that day / 9`.
+`posts per day = content units that day / number of channels`.
 
-### The ramp rule
+### The ramp
 
 ```
-RUNGS   = [3, 5, 7, 8]        posts per day
-BLOCK   = 30 days
-HORIZON = 2 blocks (60 days)
-
-for rung in RUNGS:
-    fill block 1 (days 0-29)   to rung posts/day
-    then block 2 (days 30-59)  to rung posts/day
+for rung in ramp.rungs:                  # default 3, 5, 7, 8 posts per day
+    fill block 1 to rung
+    then fill block 2 to rung
     advance only when BOTH blocks sit at rung
-both blocks at 8/day -> open block 3 (days 60-89), restart at rung 3
+both blocks at the top rung -> open block 3, restart at the first rung
 ```
 
 Never skip a rung. Never fill block 2 ahead of block 1. **A rung is a count target, not a
-slot whitelist** — if a preferred slot is blocked, fall down the ladder rather than skip the
-day. Stop when media runs out and report the exact remaining gap in posts.
+slot whitelist** — when a preferred slot is blocked, fall down the ladder rather than skip
+the day. Stop when media runs out and report the exact remaining gap in posts.
 
-## Step 7. Plan placements with collision detection
+## Step 7. Plan placements, with collision detection
 
 ```bash
 python3 scripts/schedule_engine.py plan --count N
+python3 scripts/repair.py scan
+python3 scripts/repair.py fix --all
 ```
 
-**Hard rule: 90 minutes minimum between any two posts on the same channel.** Checked against
+**Minimum gap between two posts on the same channel** is `min_gap_minutes`. Checked against
 the live calendar **plus** the pending batch, never the batch alone.
 
-Also reject any record listing the same `account_id` twice. That is a real observed failure
-that causes double posting.
+Also reject any record listing the same account twice. That causes double posting and does
+occur in the wild.
+
+`repair.py fix` moves the record with fewer destinations in a colliding pair, so the wider
+post keeps its slot.
+
+## Step 8. Upload media
 
 ```bash
-python3 scripts/repair.py scan            # audit existing defects
-python3 scripts/repair.py fix --all       # dedupe + reschedule collisions
+python3 scripts/pb.py upload --file <path>
 ```
 
-## Step 8. Upload media, verify by byte size
+Record slug, kind, byte size and media id to a manifest, and **verify every uploaded size
+against source**.
+
+If two brand cuts are byte identical, upload once and reference one media id everywhere. A
+library will otherwise accumulate many times more objects than it has posts.
+
+## Step 9. Build the still for image-only platforms
 
 ```bash
-node ~/.claude/skills/post-bridge/scripts/post-bridge.js upload --file <path>
+node tools/make-card.mjs <mediaId|file> <out.jpg> "HEADLINE" "subline" [seek]
 ```
 
-Never MCP base64; it truncates around 22k chars. Record slug, kind, byte size and media_id
-to `media-manifest.tsv` and verify every uploaded size against source.
+Crops the **upper portion** of a vertical frame, burns the headline onto the brand panel with
+the accent rule and lockup from `config/brand.json`.
 
-If two brand cuts are byte-identical, **upload once** and reference one media_id for all
-video channels. Do not create a `-bt2` duplicate. The library already holds 910 objects for
-roughly 100 posts because of this.
-
-## Step 9. Build the Google Business card
-
-```bash
-node /Users/ryan/video-builds/aia/make-gmb-card.mjs <mediaId> <out.jpg> "HEADLINE" "subline" 2
-```
-
-Crops the **upper third** of the vertical frame, burns the headline onto the brand panel with
-the accent rule and AI ACCELERATION lockup, 1200x1200, roughly 100 to 130 KB.
-
-**Never center-crop a raw video frame.** The middle band of a vertical talking-head frame is
-table and legs, and the result is unusable. Verified the hard way.
+**Never center crop a raw video frame.** On a vertical talking-head shot the middle band is
+table and legs and the result is unusable. Pass an empty headline for sources that are
+already designed cards.
 
 Build a contact sheet and actually look at it before uploading:
 ```bash
 ffmpeg -nostdin -pattern_type glob -i "gmb/*.jpg" -vf "scale=340:340,tile=5x5" -frames:v 1 -y sheet.jpg
 ```
 
-## Step 10. Write 9 captions per post
+## Step 10. Write one caption per channel
 
-One per channel, all distinct, grounded in the transcript. Plus:
-- **YouTube** `title`, 100 chars max.
-- **X** `first_comment` for any link. X strips URLs from the body.
-- **Google Business** gets a CTA and an image.
-- **Instagram** gets a `cover_image`.
-
-Match each channel's register: LinkedIn long and evidence led ending in a question, X
-compressed and provoking, TikTok and IG spoken voice, Facebook warmer and shareable, GBP
-local and plain.
+All distinct, grounded in the transcript. Plus, where the platform supports it:
+- a **video title**, within the platform's limit
+- a **first comment** for any link on platforms that strip URLs from the body
+- a **call to action** for the image-only platform
+- a **cover frame** for vertical video surfaces
 
 Assemble to `batch.json`:
 ```json
 {"posts":[{"slug":"...","scheduled_at":"...Z","video_media_id":"...","gmb_media_id":"...",
            "youtube_title":"...","twitter_first_comment":"...","gbp_cta_url":"...",
-           "captions":{"72366":"...", ... all 9 ...}}]}
+           "captions":{"<account_id>":"...", "...": "one per channel"}}]}
 ```
 
 ## Step 11. Preflight lint
@@ -219,84 +198,68 @@ python3 scripts/create_batch.py lint batch.json
 ```
 
 All must pass:
-1. 9 destinations present
-2. no duplicate `account_id` in the record
-3. 9 distinct captions
-4. YouTube title set and under 100 chars
-5. GBP entry carries an image, not video
+1. every configured channel present as a destination
+2. no duplicate account id in the record
+3. every caption distinct and non empty
+4. video title set and within limit
+5. image-only channel carries an image, not video
 6. slot is in the derived allowed set
-7. 90 minute same-channel gap vs every existing and pending post
-8. every media_id resolves and byte size matches source
+7. minimum gap honoured against every existing and pending post
+8. every media id resolves and byte size matches source
 
-Also lint the copy: no hashtags, no dashes, no banned words from either brand list.
+Also lint the copy against `pipeline.captions`: hashtags, dashes, banned words.
 
 ## Step 12. Approval gate
 
-Emit the dated table and stop.
+Emit the dated table and **stop**.
 
-| # | Date | Day | CT | UTC | Post | Headline |
+| # | Date | Day | Local | UTC | Post | Headline |
 
-Show at least one post's full 9 captions so the voice can be judged. **Nothing reaches Post
-Bridge until Ryan has seen this.**
+Show at least one post's full caption set so the voice can be judged. Nothing is written
+until a human has seen this.
 
-## Step 13. Create, then verify, then repair
+## Step 13. Create, verify, repair
 
 ```bash
 python3 scripts/create_batch.py create batch.json
 ```
 
-**The API returns a created id without reliably persisting `social_accounts`.** On a 25 post
-batch, 4 records were created with 9 captions and **0 destinations** — they would have
-published to nothing. `create_batch.py` now re-reads every record after creation and repairs
-empties automatically. Never trust the create response.
+**A successful create does not mean the record is complete.** Observed: records created with
+every caption intact and an empty destination list, which would publish to nothing. The
+script re-reads every record after creation and repairs empties automatically.
 
-The same flakiness affects PATCH:
-- A bare `social_accounts` PATCH returns **HTTP 500**. Always send
-  `account_configurations` alongside it.
-- PATCH sometimes returns **200 and drops `social_accounts` to 0**.
-- PATCH sometimes returns **500 but persists anyway**.
-
-So: **always PATCH, sleep, re-read, and check the actual field.** Never the status code.
-Retry up to 5 times. This is what `patch_verify` in `repair.py` does.
+Never trust a status code from this API. See `docs/post-bridge-api-notes.md`.
 
 ## Step 14. Postflight
 
 ```bash
-python3 scripts/repair.py scan            # confirm 0 collisions, 0 dupes, 0 empties
-python3 scripts/schedule_engine.py status # confirm the ramp moved, report residual gap
+python3 scripts/repair.py scan             # expect zero of everything
+python3 scripts/schedule_engine.py status  # confirm the ramp moved, report residual gap
+python3 scripts/pb.py results --post-id <id>
 ```
 
-Then after publish:
-- `list_post_results post_id=<id>` — confirm all 9 landed.
-- `list_analytics` at 48 to 72 hours.
+Then check analytics 48 to 72 hours after publish and feed it back into Step 5.
 
-### Known publish failure rates (measured over 1,297 results)
-
-| Account | Rate | Cause |
-|---|---|---|
-| `gbp/AIA` | 13.0% | Google Business API errors |
-| `fb/AIA-RE` | 12.8% | `Object with ID does not exist / missing permissions` |
-| `fb/BT2` | 5.3% | same |
-| everything else | under 2.5% | transient |
-
-The Facebook and Google Business failures are **auth and permission problems on the platform
-side**. They need Ryan to reconnect those accounts in the Post Bridge dashboard. Do not
-attempt to fix credentials. Report and move on.
+Publish failures cluster by platform and are usually **auth problems on the platform side**,
+fixed by reconnecting the account in the Post Bridge dashboard, not in code. Report the rate
+per account and move on. Do not attempt to repair credentials.
 
 ---
 
-## Scripts
+## Tools
 
 | Script | Purpose |
 |---|---|
-| `windows.py report\|ladder` | derive posting windows from live analytics |
-| `schedule_engine.py status\|collisions\|plan` | ramp state, collision audit, placement planning |
-| `repair.py scan\|fix` | dedupe destinations, reschedule collisions, verified writes |
-| `create_batch.py lint\|create` | preflight lint, creation, post-create verification and repair |
+| `scripts/doctor.py` | environment and configuration preflight |
+| `scripts/pb.py` | Post Bridge client: accounts, upload, get, results, media |
+| `scripts/windows.py` | derive posting windows from live analytics |
+| `scripts/schedule_engine.py` | ramp state, collision audit, placement planning |
+| `scripts/repair.py` | dedupe destinations, reschedule collisions, verified writes |
+| `scripts/create_batch.py` | preflight lint, creation, post-create verification and repair |
+| `tools/transcribe.sh` | batch transcription |
+| `tools/make-card.mjs` | brand image card for image-only platforms |
 
-## Standing account facts (verified 2026-08-29)
+## Companion skill
 
-- 18 accounts connected, 0 needing reconnect.
-- The media library holds ~910 objects for ~100 posts. Check `list_media` for an existing
-  identical asset before uploading.
-- 60 MetL drafts sit untouched in the account. They are out of scope.
+`brand-voice` loads the voice pack for each brand before any caption is written. This skill
+depends on it.
