@@ -1,0 +1,23 @@
+{
+  "_comment": "The channel set a batch fans out to. One post = one record = one unit per channel. Copy this file and edit for a different professional.",
+  "profile": "ryan-aia-bt2",
+  "min_gap_minutes": 90,
+  "gbp_account_id": 75850,
+  "channels": {
+    "72366": { "label": "ig/AIA-RE",  "platform": "instagram",       "brand": "AI Acceleration: Real Estate" },
+    "75846": { "label": "fb/AIA-RE",  "platform": "facebook",        "brand": "AI Acceleration: Real Estate" },
+    "75843": { "label": "yt/AIA-RE",  "platform": "youtube",         "brand": "AI Acceleration: Real Estate" },
+    "72367": { "label": "x/AIA",      "platform": "twitter",         "brand": "AI Acceleration" },
+    "72370": { "label": "li/AIA",     "platform": "linkedin",        "brand": "AI Acceleration" },
+    "75850": { "label": "gbp/AIA",    "platform": "google_business", "brand": "AI Acceleration" },
+    "75848": { "label": "fb/BT2",     "platform": "facebook",        "brand": "Build Things That Build Things" },
+    "75841": { "label": "ig/BT2",     "platform": "instagram",       "brand": "Build Things That Build Things" },
+    "75844": { "label": "tt/BT2",     "platform": "tiktok",          "brand": "Build Things That Build Things" }
+  },
+  "out_of_scope": {
+    "_comment": "Connected but deliberately not posted to by this profile.",
+    "72371": "ig/MetL", "72372": "fb/MetL", "72369": "li/MetL", "72373": "gbp/MetL",
+    "80485": "tt/MetL", "75845": "fb/HumanCreationCollective", "75840": "ig/HumanCreationCollective",
+    "80927": "li/RyanWanner", "80505": "x/AIAcceleration0"
+  }
+}
