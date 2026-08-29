@@ -22,11 +22,14 @@ def _find():
     p = os.environ.get("RE_SKILLS_CHANNELS")
     if p and os.path.exists(p):
         return p
-    here = os.path.dirname(os.path.abspath(__file__))
+    # realpath, not abspath: this file is normally reached through a symlink in
+    # ~/.claude/skills. normpath collapses ".." textually and would hand back a
+    # ~/.claude path instead of following the link into the repo.
+    here = os.path.dirname(os.path.realpath(__file__))
     for up in range(1, 5):
-        c = os.path.join(here, *[".."] * up, "config", "channels.json")
-        if os.path.exists(c):
-            return os.path.normpath(c)
+        c = os.path.realpath(os.path.join(here, *[".."] * up, "config", "channels.json"))
+        if os.path.isfile(c):
+            return c
     return None
 
 
