@@ -1,0 +1,5 @@
+id,contact_id,date,summary,promise,promise_due,promise_done,open_question,answers
+t-001,c-001,2026-03-02,checked in after the storm,send the roofer's contact,2026-03-09,yes,,
+t-002,c-002,2026-08-20,post-close check in,pull the final settlement statement,2026-08-26,,,
+t-003,c-003,2025-12-15,holiday note,,,,what did the Hargrove place actually close at,
+t-004,c-004,2026-08-25,open house follow up,,,,,

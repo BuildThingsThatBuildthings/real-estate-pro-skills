@@ -1,0 +1,46 @@
+{
+  "schema": "sphere-signal/drafts/v1",
+  "as_of": "2026-08-29",
+  "drafts": [
+    {
+      "id": "D-01",
+      "contact_id": "c-002",
+      "reason_id": "R-promise_due-c-002",
+      "channel": "email",
+      "status": "draft",
+      "asks": "none",
+      "earned_moment": null,
+      "body": "Marcus - I said I would get you the final settlement statement by Tuesday and I did not. It is attached now. Apologies for the lag. Anything else you need from the file, tell me and I will pull it today."
+    },
+    {
+      "id": "D-02",
+      "contact_id": "c-003",
+      "reason_id": "R-question_unanswered-c-003",
+      "channel": "email",
+      "status": "draft",
+      "asks": "none",
+      "earned_moment": null,
+      "body": "Priya - back in December you asked what the Hargrove place actually went for and I never circled back. It closed at $412,000 on 2026-01-22. [source: MLS closed sales for 37172, pulled 2026-08-29] Sorry that took eight months."
+    },
+    {
+      "id": "D-03",
+      "contact_id": "c-001",
+      "reason_id": "R-holding_period-c-001",
+      "channel": "text",
+      "status": "draft",
+      "asks": "none",
+      "earned_moment": null,
+      "body": "Dana - eight years in the Maple Ridge house as of June. No agenda here: if a move is anywhere on your mind for next year, I would rather hear it early than late. And if it is not, that is a fine answer too."
+    },
+    {
+      "id": "D-04",
+      "contact_id": "c-003",
+      "reason_id": "R-dormant-c-003",
+      "channel": "email",
+      "status": "draft",
+      "asks": "testimonial",
+      "earned_moment": "closed her second transaction with us 2015-03-30 and sent the Bells our way in 2024 without being asked",
+      "body": "Priya - separate note. You sent the Bells our way last year and I never properly thanked you for it. If you are ever willing to write two lines about what working together was like, I would be grateful. No rush and no hard feelings if you would rather not."
+    }
+  ]
+}

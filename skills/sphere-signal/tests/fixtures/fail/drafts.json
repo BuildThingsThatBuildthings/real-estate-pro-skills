@@ -1,0 +1,36 @@
+{
+  "schema": "sphere-signal/drafts/v1",
+  "as_of": "2026-08-29",
+  "drafts": [
+    {
+      "id": "D-01",
+      "contact_id": "c-001",
+      "reason_id": "",
+      "channel": "email",
+      "status": "draft",
+      "asks": "none",
+      "earned_moment": null,
+      "body": "Dana - just checking in! Hope you are well."
+    },
+    {
+      "id": "D-02",
+      "contact_id": "c-005",
+      "reason_id": "R-dormant-c-001",
+      "channel": "call",
+      "status": "sent",
+      "asks": "referral",
+      "earned_moment": null,
+      "body": "Renee - now that the kids are older you may want more space. This is a safe neighborhood with great schools and it is perfect for a growing family. I guarantee you will love it."
+    },
+    {
+      "id": "D-03",
+      "contact_id": "c-003",
+      "reason_id": "R-nonexistent-c-003",
+      "channel": "email",
+      "status": "draft",
+      "asks": "none",
+      "earned_moment": null,
+      "body": "Priya - homes in your area are up 9% and the Hargrove place went for $412,000."
+    }
+  ]
+}

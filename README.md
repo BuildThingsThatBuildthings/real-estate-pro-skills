@@ -13,6 +13,7 @@ into `~/.claude/skills`. No account ids, brand names or machine paths are hardco
 | [`content-foundry`](skills/content-foundry/) | Brand locked content production. Pulls a client's brand and weekly context from Google Drive, unifies a mixed asset dump, researches, writes a reviewable brief, generates and composites on brand assets, gates on Fair Housing and slop, and delivers a finished set to the client's `01 – Waiting` folder. |
 | [`brand-voice`](skills/brand-voice/) | Loads a brand's voice pack before any public facing copy is written, and audits the draft against it. |
 | [`chatgpt-said`](skills/chatgpt-said/) | Your client brought their own AI. Splits what the chatbot told them into individually checkable claims, classes each one against your record, and gates the reply: no dropped claim, no untraceable number, no arguing with the client, legal and tax questions referred not answered. |
+| [`sphere-signal`](skills/sphere-signal/) | Who in your database has a real, dated reason to hear from you this week. Computes reasons from your own records — an unkept promise, an unanswered question, an anniversary, a holding period, dormancy — drafts the touch, and refuses any touch with no reason, no consent, an unearned ask, or an inference about who someone is. Never sends. |
 
 Each skill has its own README explaining the practices behind it, and a `SKILL.md` that is the
 operating manual Claude follows.
@@ -80,8 +81,13 @@ from work the client already approved. Keeping them separate is deliberate: the 
 says nothing publishes on its own.
 
 `chatgpt-said` **answers** — it produces a document for the agent to use in a conversation, and
-sends nothing. It shares `content-foundry`'s Fair Housing gate by importing it rather than copying
-it, so there is exactly one copy of those rules in the bundle.
+sends nothing. `sphere-signal` **notices** — it decides who has a reason to hear from you and drafts
+the touch, and also sends nothing.
+
+Both import `content-foundry`'s Fair Housing gate rather than copying it, so there is exactly one
+copy of those rules in the bundle. Together they close a loop: `sphere-signal` finds the reason,
+`content-foundry` makes the thing worth sending, `post-bridge-schedule` schedules it when the client
+bought posting, and `chatgpt-said` handles the client who shows up with their own AI.
 
 ## Before you trust a write
 

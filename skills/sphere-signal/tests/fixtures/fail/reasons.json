@@ -1,0 +1,92 @@
+{
+  "schema": "sphere-signal/reasons/v1",
+  "as_of": "2026-08-29",
+  "config": {
+    "dormant_days": 180,
+    "holding_period_years": 7,
+    "anniversary_lead_days": 21
+  },
+  "contacts_scanned": 5,
+  "reason_count": 6,
+  "reasons": [
+    {
+      "id": "R-promise_due-c-002",
+      "contact_id": "c-002",
+      "contact_name": "Marcus Bell",
+      "reason": "promise_due",
+      "as_of": "2026-08-29",
+      "human": "promised 'pull the final settlement statement', due 2026-08-26",
+      "computed": {
+        "promise": "pull the final settlement statement",
+        "due": "2026-08-26",
+        "days_overdue": 3
+      },
+      "source": "touchpoint 2026-08-20"
+    },
+    {
+      "id": "R-question_unanswered-c-003",
+      "contact_id": "c-003",
+      "contact_name": "Priya Raman",
+      "reason": "question_unanswered",
+      "as_of": "2026-08-29",
+      "human": "asked 'what did the Hargrove place actually close at' and it was never answered",
+      "computed": {
+        "question": "what did the Hargrove place actually close at",
+        "asked": "2025-12-15"
+      },
+      "source": "touchpoint 2025-12-15"
+    },
+    {
+      "id": "R-holding_period-c-001",
+      "contact_id": "c-001",
+      "contact_name": "Dana Whitfield",
+      "reason": "holding_period",
+      "as_of": "2026-08-29",
+      "human": "owned 8 years, past the 7-year mark",
+      "computed": {
+        "closed": "2018-06-14",
+        "years_held": 8
+      },
+      "source": "contact.closed_date"
+    },
+    {
+      "id": "R-holding_period-c-003",
+      "contact_id": "c-003",
+      "contact_name": "Priya Raman",
+      "reason": "holding_period",
+      "as_of": "2026-08-29",
+      "human": "owned 11 years, past the 7-year mark",
+      "computed": {
+        "closed": "2015-03-30",
+        "years_held": 11
+      },
+      "source": "contact.closed_date"
+    },
+    {
+      "id": "R-dormant-c-001",
+      "contact_id": "c-001",
+      "contact_name": "Dana Whitfield",
+      "reason": "dormant",
+      "as_of": "2026-08-29",
+      "human": "180 days since the last contact on 2026-03-02",
+      "computed": {
+        "last_contact": "2026-03-02",
+        "days_since": 180
+      },
+      "source": "touchpoint 2026-03-02"
+    },
+    {
+      "id": "R-dormant-c-003",
+      "contact_id": "c-003",
+      "contact_name": "Priya Raman",
+      "reason": "dormant",
+      "as_of": "2026-08-29",
+      "human": "257 days since the last contact on 2025-12-15",
+      "computed": {
+        "last_contact": "2025-12-15",
+        "days_since": 257
+      },
+      "source": "touchpoint 2025-12-15"
+    }
+  ]
+}
