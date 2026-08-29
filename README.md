@@ -10,6 +10,7 @@ into `~/.claude/skills`. No account ids, brand names or machine paths are hardco
 | Skill | What it does |
 |---|---|
 | [`post-bridge-schedule`](skills/post-bridge-schedule/) | Folder of finished video in, verified scheduled social records out. Derives posting windows from your own analytics, enforces a cadence ramp, detects same-channel collisions, writes one caption per channel, and verifies every write. |
+| [`content-foundry`](skills/content-foundry/) | Brand locked content production. Pulls a client's brand and weekly context from Google Drive, unifies a mixed asset dump, researches, writes a reviewable brief, generates and composites on brand assets, gates on Fair Housing and slop, and delivers a finished set to the client's `01 – Waiting` folder. |
 | [`brand-voice`](skills/brand-voice/) | Loads a brand's voice pack before any public facing copy is written, and audits the draft against it. |
 
 More skills will be added.
@@ -45,6 +46,7 @@ much content you actually have.
 | `config/channels.json` | channel set, minimum gap, which platforms are image only |
 | `config/brand.json` | brand name, lockup, colours, fonts, default call to action |
 | `config/pipeline.json` | ramp rungs, window scoring, timezone, tool paths, copy rules |
+| `config/clients.json` | per client Drive folder ids, weekly floor and cap, posting on or off |
 | `config/voice/*.md` | one voice pack per brand |
 
 Copy each `.example.json`. Local copies are gitignored.
@@ -61,8 +63,17 @@ you run it for more than one person.
 | `node` 18+ | card generator |
 | `python3` 3.9+ | pipeline scripts |
 | `whisper-cli` and a ggml model | transcription (optional but strongly recommended) |
+| `rclone` with a Drive remote | pulling client brand and weekly context |
+| Pillow | image compositing in content-foundry |
 
 `doctor.py` checks all of it.
+
+## How the two production skills relate
+
+`content-foundry` **makes** things and delivers them for approval. It never publishes.
+`post-bridge-schedule` **schedules** things, and only for clients who bought posting, and only
+from work the client already approved. Keeping them separate is deliberate: the client agreement
+says nothing publishes on its own.
 
 ## Before you trust a write
 

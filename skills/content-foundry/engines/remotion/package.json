@@ -1,0 +1,17 @@
+{
+  "name": "content-foundry-remotion-engine",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Content Foundry video engine: brand-token-driven Remotion compositions",
+  "scripts": {
+    "render": "remotion render"
+  },
+  "dependencies": {
+    "@chenglou/pretext": "^0.0.8",
+    "@remotion/cli": "^4.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "^4.0.0",
+    "zod": "4.4.3"
+  }
+}

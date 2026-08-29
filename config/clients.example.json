@@ -1,0 +1,26 @@
+{
+  "_comment": "One entry per client. Folder ids come from the Drive URL: drive.google.com/drive/folders/<ID>. Get them once when the client is onboarded.",
+  "rclone_remote": "gdrive:",
+  "cache_root": "~/.cache/re-skills/clients",
+  "clients": {
+    "example-agent": {
+      "name": "Example Agent",
+      "brand": "Example Realty",
+      "voice_pack": "example-agent",
+      "drive": {
+        "_comment": "brand_context is pulled EVERY run. weekly_context is pulled at the start of a weekly run. waiting is where finished sets are delivered.",
+        "brand_context_folder_id": "PUT_FOLDER_ID_HERE",
+        "weekly_context_folder_id": "PUT_FOLDER_ID_HERE",
+        "waiting_folder_id": "PUT_FOLDER_ID_HERE",
+        "approved_folder_id": "PUT_FOLDER_ID_HERE",
+        "revision_folder_id": "PUT_FOLDER_ID_HERE"
+      },
+      "output": {
+        "_comment": "Weekly floor and cap, from the client agreement.",
+        "photos_floor": 5, "videos_floor": 5,
+        "photos_cap": 20, "videos_cap": 20
+      },
+      "posting_enabled": false
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "banned_phrases": [
+    "delve into", "delve deeper", "seamlessly", "effortlessly", "unleash", "unlock your",
+    "supercharge", "empower", "game-changing", "game changer", "cutting-edge", "revolutionary",
+    "best-in-class", "world-class", "in today's fast-paced", "in today's digital",
+    "take your business to the next level", "all-in-one platform", "build the future of",
+    "scale without limits", "transform your workflow", "drive meaningful results",
+    "exceptional solutions", "elevate your", "thought leader", "synergy", "circle back",
+    "at the end of the day", "it goes without saying", "it's worth noting",
+    "i'd be happy to help", "great question", "look no further", "we believe in delivering",
+    "trusted by industry leaders", "join thousands of"
+  ],
+  "banned_regex": [
+    {"pattern": "linear-gradient\\([^)]*(#7c3aed|#8b5cf6|#a855f7|#6366f1|#4f46e5|#7e22ce|#9333ea|purple|violet|indigo)[^)]*(#3b82f6|#2563eb|#60a5fa|#0ea5e9|#06b6d4|blue|cyan)[^)]*\\)", "flags": "i", "label": "purple-to-blue gradient (canonical AI slop tell)"},
+    {"pattern": "linear-gradient\\([^)]*(#3b82f6|#2563eb|blue)[^)]*(#7c3aed|#8b5cf6|#a855f7|purple|violet)[^)]*\\)", "flags": "i", "label": "blue-to-purple gradient (canonical AI slop tell)"},
+    {"pattern": "border-left:\\s*[3-9]px\\s+solid", "flags": "i", "label": "thick accent stripe on card edge (generated-UI signature)"},
+    {"pattern": "border-l-4|border-l-8", "flags": "", "label": "thick accent stripe (Tailwind, generated-UI signature)"},
+    {"pattern": "backdrop-blur|backdrop-filter:\\s*blur", "flags": "i", "label": "glassmorphism — verify it solves a layering problem, not decoration"},
+    {"pattern": "bg-gradient-to-r from-(purple|violet|indigo)-\\d+ (via-\\S+ )?to-(blue|cyan|sky)-\\d+", "flags": "", "label": "purple-to-blue gradient (Tailwind)"},
+    {"pattern": "font-family:\\s*['\"]?(Inter|Poppins)", "flags": "i", "label": "Inter/Poppins — confirm it's a documented brand choice, not a default"},
+    {"pattern": "text-transparent bg-clip-text", "flags": "", "label": "gradient text — verify deliberate, this is a default-aesthetic tell"},
+    {"pattern": "[\\U0001F300-\\U0001FAFF\\u2600-\\u27BF\\uFE0F]", "flags": "", "label": "emoji in output"}
+  ],
+  "em_dash_max_per_500_words": 2,
+  "structural_checks": {
+    "feature_card_formula": {"pattern": "that helps you|that lets you|that empowers", "flags": "i", "label": "feature copy formula: [adjective]+[noun]+'that helps you'"},
+    "fake_testimonial": {"pattern": "\\b[A-Z][a-z]+ [A-Z]\\.,\\s*(Marketing|Sales|Product|Operations) (Director|Manager|Lead)", "flags": "", "label": "testimonial pattern with initial-only surname (hallucination tell)"},
+    "generic_cta": {"pattern": ">\\s*(Get Started|Learn More|Submit|Sign Up Now|Click Here)\\s*<", "flags": "i", "label": "generic CTA label — CTA should name the outcome or action (Becker: remove doubt at point of click)"}
+  },
+  "exceptions_note": "A finding is dismissible only with a documented reason (e.g., Inter is the brand font per the project's brand file). Document dismissals in RYVIBES-LOG.md."
+}
