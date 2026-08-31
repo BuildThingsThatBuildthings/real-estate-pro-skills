@@ -17,6 +17,54 @@ echo "$REPORT" | grep -q "delve into" && ok "catches 'delve into'" || bad "'delv
 echo "$REPORT" | grep -q "fast-paced" && ok "catches 'in today's fast-paced'" || bad "fast-paced slipped"
 echo "$REPORT" | grep -qi "em.dash\|em-dash\|—" && ok "em-dash density flagged" || bad "em-dash pile not flagged"
 
+echo "== composite: the full pipeline runs offline on the fixture agent =="
+TMP=$(mktemp -d)
+python3 - "$TMP" <<'PY'
+# a plain base image; composite must work on ANY base
+import sys
+from PIL import Image
+Image.new("RGB", (1200, 1500), (16, 42, 67)).save(sys.argv[1] + "/base.jpg")
+PY
+python3 scripts/composite.py --base "$TMP/base.jpg" --agent tests/fixtures/agent \
+  --channel ig --headline "The county record says 2,400 square feet." \
+  --subhead "Just listed: 412 Maple Ridge Dr. Showings start Saturday. Request a time through the link." \
+  --allow-demo --out "$TMP/out.jpg" >/dev/null 2>&1 \
+  && ok "composite runs" || bad "composite failed"
+python3 - "$TMP" <<'PY' && ok "subhead is rendered and recorded" || bad "subhead dropped (the silent-drop regression)"
+import json, sys
+m = json.load(open(sys.argv[1] + "/out.composite.json"))
+types = [e["type"] for e in m["elements"]]
+sys.exit(0 if "subhead" in types else 1)
+PY
+python3 - "$TMP" <<'PY' && ok "logo does not overlap the text block" || bad "logo collides with headline/subhead"
+import json, sys
+m = json.load(open(sys.argv[1] + "/out.composite.json"))
+els = {e["type"]: e for e in m["elements"]}
+lo, hd, sb = els["logo"]["box"], els["headline"]["box"], els["subhead"]["box"]
+block = (hd[0], hd[1], hd[2], sb[3])
+overlap = not (lo[2] <= block[0] or block[2] <= lo[0] or lo[3] <= block[1] or block[3] <= lo[1])
+sys.exit(1 if overlap else 0)
+PY
+# the wrap bug lived on the story format, where the larger compliance font
+# pushed the disclosure off the right edge — so that is where it is pinned
+python3 scripts/composite.py --base "$TMP/base.jpg" --agent tests/fixtures/agent \
+  --channel igs --headline "The county record says 2,400 square feet." \
+  --subhead "Just listed: 412 Maple Ridge Dr." \
+  --allow-demo --out "$TMP/out-igs.jpg" >/dev/null 2>&1
+python3 - "$TMP" <<'PY' && ok "compliance text wraps inside the safe zone (igs)" || bad "compliance text overflows the frame"
+import json, sys
+m = json.load(open(sys.argv[1] + "/out-igs.composite.json"))
+W = m["size"][0]; sr = m["safe_zone"]["right"]
+comp = [e for e in m["elements"] if e["type"] == "compliance"]
+sys.exit(0 if comp and all(e["box"][2] <= W - sr + 1 for e in comp) and any(e.get("lines", 1) >= 2 for e in comp) else 1)
+PY
+# demo persona without --allow-demo must refuse
+python3 scripts/composite.py --base "$TMP/base.jpg" --agent tests/fixtures/agent \
+  --channel ig --headline "x" --out "$TMP/refused.jpg" >/dev/null 2>&1 \
+  && bad "demo persona produced listing content without --allow-demo" \
+  || ok "demo persona refuses without --allow-demo"
+rm -rf "$TMP"
+
 echo "== the compliance shim still resolves to compliance-gate =="
 python3 -c "
 import sys, os

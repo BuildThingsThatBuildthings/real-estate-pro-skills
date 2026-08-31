@@ -263,19 +263,47 @@ def main():
     line_h = int(hsize * 1.18)
     block_h = line_h * len(hlines)
     comp_size = max(MIN_COMPLIANCE_PX, int(H * 0.0145))
-    comp_lines = [v for v in (required["license"], required["disclosure"],
-                              required["fair_housing"]) if v]
-    comp_h = int(comp_size * 1.35) * len(comp_lines)
+    cfont, _cfb = load_font(None, comp_size, kind="body")
+    comp_line_h = int(comp_size * 1.35)
+    # Wrap every compliance string to the safe width. Legal text running off
+    # the frame edge is a truncated disclosure — a compliance failure, not a
+    # styling nit. Wrapped height is reserved in the layout like any block.
+    comp_wrapped = []
+    for _label, _txt in (("license", required["license"]),
+                         ("disclosure", required["disclosure"]),
+                         ("fair_housing", required["fair_housing"])):
+        if _txt:
+            comp_wrapped.append((_label, _txt, wrap(draw, _txt, cfont, W - sl - sr)))
+    comp_h = comp_line_h * sum(len(w[2]) for w in comp_wrapped)
 
-    # Headline sits above the compliance block, inside the safe zone.
-    h_top = H - sb - comp_h - int(H * 0.035) - block_h
+    # --- subhead (optional) ----------------------------------------------
+    # Fitted BEFORE the headline position is set so the layout reserves room.
+    # An earlier version parsed --subhead and rendered it nowhere; silently
+    # dropping copy is the one failure this pipeline exists to prevent.
+    sub_font = None; sub_lines = []; sub_lh = 0; sub_h = 0; sub_gap = 0
+    if args.subhead:
+        sfit = fit_text(draw, args.subhead, None, text_w, max_lines=3,
+                        start_size=max(int(hsize * 0.38), int(H * 0.021)),
+                        min_size=int(H * 0.015), kind="sans")
+        if not sfit:
+            print(f"STOP: subhead does not fit {args.channel} below the "
+                  f"headline at legible size. Send the brief back for shorter "
+                  f"copy — do not drop it silently.", file=sys.stderr)
+            return 1
+        sub_font, sub_lines, sub_size, _sfb = sfit
+        sub_lh = int(sub_size * 1.4)
+        sub_h = sub_lh * len(sub_lines)
+        sub_gap = int(H * 0.02)
+
+    # Headline sits above subhead + compliance block, inside the safe zone.
+    h_top = H - sb - comp_h - int(H * 0.035) - sub_h - sub_gap - block_h
     h_box = (sl, h_top, W - sr, h_top + block_h)
 
     # --- scrim (conditional) ---------------------------------------------
     text_rgb = hex_to_rgb(colors.get("text-on-dark", "#ffffff"))
     # Measure on the HEADLINE BOX with worst-case sampling — not the whole lower
     # region, and not the mean. The text only has to survive where it sits.
-    measure_box = (sl, max(0, h_top - 8), W - sr, h_top + block_h + 8)
+    measure_box = (sl, max(0, h_top - 8), W - sr, h_top + block_h + sub_gap + sub_h + 8)
     ratio = contrast_ratio(text_rgb, region_worst(canvas, measure_box, text_rgb))
     force_panel = args.treatment == "panel"
     if not force_panel and ratio < MIN_CONTRAST:
@@ -352,6 +380,18 @@ def main():
         "font_size": hsize, "box": list(h_box), "color": colors.get("text-on-dark", "#ffffff"),
     })
 
+    # --- subhead type -----------------------------------------------------
+    if sub_lines:
+        sy = h_top + block_h + sub_gap
+        for ln in sub_lines:
+            draw.text((sl, sy), ln, font=sub_font, fill=text_rgb)
+            sy += sub_lh
+        manifest["elements"].append({
+            "type": "subhead", "text": args.subhead, "lines": sub_lines,
+            "font_size": sub_lh, "box": [sl, h_top + block_h + sub_gap, W - sr, sy],
+            "color": colors.get("text-on-dark", "#ffffff"),
+        })
+
     # --- logo -------------------------------------------------------------
     # Open one variant first purely for geometry (variants share aspect); the
     # light/dark choice happens AFTER the final position is known, because
@@ -393,9 +433,11 @@ def main():
                   else placement.replace("right", "left")]
     pos = None
     placed_via = placement
+    # The occupied block runs from the headline top to the subhead bottom.
+    text_block = (h_box[0], h_box[1], h_box[2], h_box[3] + sub_gap + sub_h)
     for cand in candidates:
         x, y = logo_xy(cand)
-        if not overlaps((x, y, x + logo.width, y + logo.height), h_box):
+        if not overlaps((x, y, x + logo.width, y + logo.height), text_block):
             pos, placed_via = (x, y), cand
             break
     if pos is None:
@@ -412,7 +454,7 @@ def main():
     if placed_via != placement:
         manifest["warnings"].append(
             f"logo moved from '{placement}' to '{placed_via}' to avoid the "
-            f"headline block on this format")
+            f"text block on this format")
 
     # Variant selection at the FINAL box, by WORST-CASE contrast — a mean over a
     # mixed background (white railing + dark pavilion) picks confidently and
@@ -456,7 +498,7 @@ def main():
     })
 
     # --- compliance block -------------------------------------------------
-    cfont, _ = load_font(None, comp_size, kind="body")
+    # cfont was resolved above, at layout time, so wrapping and drawing agree.
     cy = H - sb - comp_h
 
     # The compliance block gets the same guarantee as the headline: if any
@@ -482,17 +524,17 @@ def main():
             "reason": f"compliance worst-case contrast {worst:.2f} < {MIN_CONTRAST}",
             "color": colors["primary"], "box": list(comp_block),
         })
-    for label, txt in (("license", required["license"]),
-                       ("disclosure", required["disclosure"]),
-                       ("fair_housing", required["fair_housing"])):
-        if not txt:
-            continue
-        cbox = (sl, cy, W - sr, cy + int(comp_size * 1.35))
+    for label, txt, tlines in comp_wrapped:
+        block_top = cy
+        cbox = (sl, cy, W - sr, cy + comp_line_h * len(tlines))
         cratio = contrast_ratio(text_rgb, region_worst(canvas, cbox, text_rgb))
-        draw.text((sl, cy), txt, font=cfont, fill=text_rgb)
+        for tl in tlines:
+            draw.text((sl, cy), tl, font=cfont, fill=text_rgb)
+            cy += comp_line_h
+        cy -= comp_line_h  # the shared advance below expects one line-step
         el = {"type": "compliance", "field": label, "text": txt,
-              "font_size": comp_size,
-              "box": [sl, cy, W - sr, cy + int(comp_size * 1.35)],
+              "lines": len(tlines), "font_size": comp_size,
+              "box": [sl, block_top, W - sr, block_top + comp_line_h * len(tlines)],
               "contrast": round(cratio, 2)}
         if cratio < MIN_CONTRAST:
             # Recorded, not silently accepted — brand_lint.py fails on this.
