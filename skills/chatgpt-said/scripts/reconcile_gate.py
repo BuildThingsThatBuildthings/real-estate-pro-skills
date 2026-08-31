@@ -21,11 +21,11 @@ drops a claim, asserts a number nobody can trace, or argues with the client.
 import argparse, json, os, re, sys
 
 _HERE = os.path.dirname(os.path.realpath(__file__))
-# Reuse, don't rebuild: the Fair Housing baseline and the client GUARDRAILS
-# loader already exist in content-foundry and are the same rules here.
-sys.path.insert(0, os.path.realpath(os.path.join(_HERE, "..", "..", "content-foundry", "scripts")))
+# Reuse, don't rebuild: the Fair Housing baseline lives in compliance-gate —
+# the ONE copy of those rules in the bundle.
+sys.path.insert(0, os.path.realpath(os.path.join(_HERE, "..", "..", "compliance-gate", "scripts")))
 try:
-    import compliance as _compliance
+    import fair_housing as _compliance
 except Exception:  # noqa: BLE001 — reported as a check, not a crash
     _compliance = None
 
@@ -39,7 +39,7 @@ CLASSES = {
 NEEDS_SOURCE = {"verified", "contradicted"}
 NEEDS_CORRECTION = {"contradicted"}
 
-CITATION = re.compile(r"\[(C-\d{2}-[0-9a-f]{4}|verified|computed)\]")
+CITATION = re.compile(r"\[(C-[0-9a-f]{6}[a-z]?|verified|computed)\]")
 MONEY = re.compile(r"\$\s?\d[\d,]*(?:\.\d+)?\s?(?:k|m|million|thousand)?\b", re.I)
 PERCENT = re.compile(r"\b\d+(?:\.\d+)?\s?(?:%|percent\b)", re.I)
 
@@ -219,7 +219,7 @@ def gate_referrals(doc, text, r):
 
 def gate_compliance(text, client, r, lenient):
     if _compliance is None:
-        r.fail("COMPLIANCE", "content-foundry/scripts/compliance.py could not be imported; "
+        r.fail("COMPLIANCE", "compliance-gate/scripts/fair_housing.py could not be imported; "
                              "the Fair Housing baseline did not run")
         return
     try:
@@ -273,7 +273,7 @@ def cmd_classes(_a):
         req = f"   requires: {', '.join(need)}" if need else ""
         print(f"  {k:<14} {why}{req}")
     print("\nciting numbers in the reconciliation")
-    print("  [C-nn-xxxx]   the figure comes from that claim, or from its correct_value")
+    print("  [C-xxxxxx]    the figure comes from that claim, or from its correct_value")
     print("  [verified]    the agent's own record; a human confirms it")
     print("  [computed]    derived from figures already cited above it")
     return 0

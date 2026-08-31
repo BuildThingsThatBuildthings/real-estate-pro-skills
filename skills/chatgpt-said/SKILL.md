@@ -116,7 +116,7 @@ checked, it is not classified yet.
 the research, agreement first, what has moved, what it could not see, where the files differ, not
 my lane, next concrete step.
 
-Cite as you go. `[C-nn-xxxx]` for anything a claim carries, `[verified]` for a figure from the
+Cite as you go. `[C-xxxxxx]` for anything a claim carries, `[verified]` for a figure from the
 agent's own record, `[computed]` for one derived from figures already cited. Citations govern the
 paragraph they appear in.
 

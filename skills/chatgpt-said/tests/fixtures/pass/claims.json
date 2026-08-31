@@ -4,7 +4,7 @@
   "claim_count": 8,
   "claims": [
     {
-      "id": "C-02-d91b",
+      "id": "C-d91b36",
       "text": "Your home is likely worth around $540,000 in the current market.",
       "kinds": [
         "price"
@@ -23,7 +23,7 @@
       "note": "The estimate leans on the two highest sales in the subdivision without adjusting for them."
     },
     {
-      "id": "C-03-9439",
+      "id": "C-94398e",
       "text": "Comparable homes in your area have sold for more than $525,000 over the last six months.",
       "kinds": [
         "price",
@@ -43,7 +43,7 @@
       "note": "Both sales above that number back to the golf course and one was new construction in 2025. Nothing in public data flags either difference."
     },
     {
-      "id": "C-04-8185",
+      "id": "C-8185c9",
       "text": "The property is 2,400 sq ft with 4 bedrooms and 2.5 bathrooms, built in 1998.",
       "kinds": [
         "area",
@@ -58,7 +58,7 @@
       "note": "Every structural fact is right."
     },
     {
-      "id": "C-05-aa74",
+      "id": "C-aa747d",
       "text": "Homes in your zip code have appreciated 8% over the past year.",
       "kinds": [
         "percent"
@@ -77,7 +77,7 @@
       "note": "That figure was accurate year-over-year through late 2025. The trailing twelve months read differently."
     },
     {
-      "id": "C-06-f193",
+      "id": "C-f193ac",
       "text": "Average days on market is currently 21 days.",
       "kinds": [
         "date"
@@ -90,7 +90,7 @@
       "note": "The shorter number is a national average, not this zip code."
     },
     {
-      "id": "C-07-2550",
+      "id": "C-255083",
       "text": "You should list at $565,000 to leave room to negotiate.",
       "kinds": [
         "price",
@@ -110,7 +110,7 @@
       "note": "A list price depends on the seller's timing, carrying costs and condition. The model was not told any of the three."
     },
     {
-      "id": "C-08-43b8",
+      "id": "C-43b891",
       "text": "Most sellers get about 4% below their asking price, so this positions you well.",
       "kinds": [
         "percent",
@@ -130,7 +130,7 @@
       "note": "This one matches the local record closely."
     },
     {
-      "id": "C-09-8b4d",
+      "id": "C-8b4d0f",
       "text": "One more thing: you may be able to exclude the capital gains on this sale if you have lived there two of the last five years, but you should confirm that with a tax professional.",
       "kinds": [
         "recommend",

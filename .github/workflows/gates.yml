@@ -1,0 +1,80 @@
+name: gates
+
+# The bundle's whole pitch is "the lint must be able to fail." This workflow is
+# that law applied to the bundle itself: every suite, every doctor, every demo,
+# on every push. A gate that stops firing fails the build here, not in front of
+# a client.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.8", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Every script compiles
+        run: python3 -m py_compile $(find skills lib -name "*.py") && echo compiled
+
+      - name: Marketplace manifest is valid and complete
+        run: |
+          python3 -c "
+          import json, os
+          m = json.load(open('.claude-plugin/marketplace.json'))
+          skills = m['plugins'][0]['skills']
+          missing = [s for s in skills if not os.path.isfile(os.path.join(s, 'SKILL.md'))]
+          assert not missing, f'manifest lists skills with no SKILL.md: {missing}'
+          on_disk = {f'./skills/{d}' for d in os.listdir('skills') if os.path.isfile(f'skills/{d}/SKILL.md')}
+          unlisted = on_disk - set(skills)
+          assert not unlisted, f'skills on disk missing from manifest: {unlisted}'
+          print(len(skills), 'skills, manifest complete')"
+
+      - name: Gate suites (must pass, and must contain failure assertions)
+        run: |
+          set -e
+          for s in chatgpt-said sphere-signal listing-price-brief compliance-gate; do
+            echo "::group::$s"
+            bash "skills/$s/tests/run_tests.sh"
+            echo "::endgroup::"
+          done
+
+      - name: Doctors
+        run: |
+          set -e
+          for s in chatgpt-said sphere-signal listing-price-brief compliance-gate; do
+            python3 "skills/$s/scripts/doctor.py"
+          done
+
+      - name: Demos run clean
+        run: |
+          set -e
+          for s in chatgpt-said sphere-signal listing-price-brief compliance-gate; do
+            OUT=$(bash "skills/$s/demo/demo.sh" 2>&1)
+            if echo "$OUT" | grep -q "Traceback\|command not found\|No such file"; then
+              echo "$s demo broke:"; echo "$OUT" | tail -20; exit 1
+            fi
+            echo "$s demo: clean"
+          done
+
+      - name: Fixtures are fresh against the live splitter and scanner
+        run: |
+          set -e
+          cd skills/chatgpt-said
+          python3 scripts/claim_split.py split --in tests/fixtures/pass/chatbot.txt \
+            --out /tmp/live.json --source "seller's ChatGPT, 2026-08-28" > /dev/null
+          python3 -c "
+          import json
+          live = {c['id'] for c in json.load(open('/tmp/live.json'))['claims']}
+          fix = {c['id'] for c in json.load(open('tests/fixtures/pass/claims.json'))['claims']}
+          assert live == fix, 'chatgpt-said pass fixture is stale vs splitter'
+          print('fixtures fresh')"

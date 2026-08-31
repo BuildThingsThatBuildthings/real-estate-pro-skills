@@ -25,10 +25,11 @@ make it easy.
 import argparse, csv, json, os, re, sys
 
 _HERE = os.path.dirname(os.path.realpath(__file__))
-# Reuse, don't rebuild: one copy of the Fair Housing baseline in the bundle.
-sys.path.insert(0, os.path.realpath(os.path.join(_HERE, "..", "..", "content-foundry", "scripts")))
+# Reuse, don't rebuild: one copy of the Fair Housing baseline in the bundle,
+# and it lives in compliance-gate.
+sys.path.insert(0, os.path.realpath(os.path.join(_HERE, "..", "..", "compliance-gate", "scripts")))
 try:
-    import compliance as _compliance
+    import fair_housing as _compliance
 except Exception:  # noqa: BLE001 — surfaced as a check, not a crash
     _compliance = None
 
@@ -151,7 +152,7 @@ def gate_no_send(drafts, r):
 
 def gate_compliance(drafts, client, r, lenient):
     if _compliance is None:
-        r.fail("COMPLIANCE", "content-foundry/scripts/compliance.py could not be imported; "
+        r.fail("COMPLIANCE", "compliance-gate/scripts/fair_housing.py could not be imported; "
                              "the Fair Housing baseline did not run")
         return
     try:

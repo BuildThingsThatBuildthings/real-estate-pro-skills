@@ -1,17 +1,53 @@
 # Getting started
 
-## 1. Install
+## 1. Install (two lines, in Claude Code)
 
-```bash
-git clone <this repo> ~/real-estate-pro-skills
-cd ~/real-estate-pro-skills
-./install.sh
+```
+/plugin marketplace add BuildThingsThatBuildthings/real-estate-pro-skills
 ```
 
-Skills are symlinked into `~/.claude/skills` so edits take effect immediately. Use
-`--copy` if you would rather they be independent.
+```
+/plugin install real-estate-skills@real-estate-pro-skills
+```
 
-## 2. Authenticate
+All seven skills are available immediately. Developing or prefer symlinks? Clone and run
+`./install.sh` instead — skills symlink into `~/.claude/skills` so edits take effect
+immediately (`--copy` for independent copies).
+
+## 2. Try one right now — no configuration
+
+Four skills need zero setup: no keys, no accounts, no network.
+
+Just describe the situation:
+
+> *"My seller brought me ChatGPT comps saying her house is worth $540k and my comp set
+> says $505-522k. Help me respond."* → **chatgpt-said**
+>
+> *"Who in my database should I follow up with this week?"* (attach your contacts CSV)
+> → **sphere-signal**
+>
+> *"Price this listing — here's my MLS export."* → **listing-price-brief**
+>
+> *"Can I post this caption?"* → **compliance-gate**
+
+Or watch a gate refuse bad work in two minutes — each skill ships a runnable proof:
+
+```bash
+bash skills/chatgpt-said/demo/demo.sh
+bash skills/sphere-signal/demo/demo.sh
+bash skills/listing-price-brief/demo/demo.sh
+bash skills/compliance-gate/demo/demo.sh
+```
+
+The demos are the fastest way to understand the design: nothing reaches a client until a
+gate exits 0, and every gate is tested to be able to fail.
+
+## 3. When you want the content pipeline
+
+`content-foundry` (production) and `post-bridge-schedule` (scheduling) need credentials
+and config. Where finished work goes: [drive-delivery.md](drive-delivery.md).
+
+### Authenticate
 
 Either export a key:
 
@@ -25,7 +61,7 @@ or create `~/.config/post-bridge/config.json`:
 { "apiKey": "pb_live_xxxxx" }
 ```
 
-## 3. Configure
+### Configure
 
 ```bash
 cd config

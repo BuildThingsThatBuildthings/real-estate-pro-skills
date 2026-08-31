@@ -108,16 +108,31 @@ def values_in(sentence):
     return vals
 
 
-def claim_id(index, sentence):
-    """Stable across runs, so a re-split after an edit does not renumber every
-    citation the agent already wrote."""
-    h = hashlib.sha256(sentence.encode("utf-8")).hexdigest()[:4]
-    return f"C-{index:02d}-{h}"
+def claim_ids(sentences):
+    """One id per sentence, derived from the sentence text alone.
+
+    The id must survive an EDIT, not just a re-run. An earlier scheme prefixed
+    the position (C-01-d91b); inserting one sentence above shifted every index
+    below it and silently detached every citation the agent had already written.
+    Hash-only ids don't move when their neighbours do.
+
+    A repeated sentence gets a, b, c suffixes in order of appearance, so two
+    identical claims stay distinct and both stay citable."""
+    seen = {}
+    out = []
+    for s in sentences:
+        h = hashlib.sha256(s.encode("utf-8")).hexdigest()[:6]
+        n = seen.get(h, 0)
+        seen[h] = n + 1
+        out.append(f"C-{h}" if n == 0 else f"C-{h}{chr(ord('a') + n)}")
+    return out
 
 
 def split(text, source_label):
     claims = []
-    for i, s in enumerate(segment(text), start=1):
+    sentences = segment(text)
+    ids = claim_ids(sentences)
+    for i, s in enumerate(sentences, start=1):
         k = kinds_of(s)
         if not k and not HEDGE.search(s):
             # An unclassifiable sentence is still a claim if it asserts anything.
@@ -126,7 +141,7 @@ def split(text, source_label):
                 continue
             k = ["assertion"]
         claims.append({
-            "id": claim_id(i, s),
+            "id": ids[i - 1],
             "text": s,
             "kinds": k or ["assertion"],
             "hedged": bool(HEDGE.search(s)),

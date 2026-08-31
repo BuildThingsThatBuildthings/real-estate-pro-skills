@@ -38,6 +38,32 @@ sys.exit(0 if {c["id"] for c in live["claims"]} == {c["id"] for c in fix["claims
 PY
 then ok "fixture ids match live splitter output"; else bad "fixture is stale vs splitter"; fi
 
+# Edit stability: inserting a sentence ABOVE a claim must not change its id.
+# The first id scheme prefixed the position; one inserted sentence detached
+# every citation below it. This test pins the fix.
+T1=$(mktemp); T2=$(mktemp)
+printf 'The home is worth $500,000.\n' > "$T1.txt"
+printf 'A brand new opening line was added.\nThe home is worth $500,000.\n' > "$T2.txt"
+python3 scripts/claim_split.py split --in "$T1.txt" --out "$T1" >/dev/null 2>&1
+python3 scripts/claim_split.py split --in "$T2.txt" --out "$T2" >/dev/null 2>&1
+if python3 - "$T1" "$T2" <<'PY'
+import json, sys
+a = {c["text"]: c["id"] for c in json.load(open(sys.argv[1]))["claims"]}
+b = {c["text"]: c["id"] for c in json.load(open(sys.argv[2]))["claims"]}
+k = "The home is worth $500,000."
+sys.exit(0 if a[k] == b[k] else 1)
+PY
+then ok "claim ids survive an inserted sentence"; else bad "claim id changed when a sentence was inserted above it"; fi
+# Duplicate sentences must get DISTINCT ids, or two claims collapse into one citation.
+printf 'The roof is new.\nThe roof is new.\n' > "$T1.txt"
+python3 scripts/claim_split.py split --in "$T1.txt" --out "$T1" >/dev/null 2>&1
+if python3 - "$T1" <<'PY'
+import json, sys
+ids = [c["id"] for c in json.load(open(sys.argv[1]))["claims"]]
+sys.exit(0 if len(ids) == len(set(ids)) == 2 else 1)
+PY
+then ok "duplicate sentences get distinct ids"; else bad "duplicate sentences collided on one id"; fi
+
 echo "== gate: a clean reconciliation passes =="
 if python3 scripts/reconcile_gate.py check \
      --claims tests/fixtures/pass/claims.json \

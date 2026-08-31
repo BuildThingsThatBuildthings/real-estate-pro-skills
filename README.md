@@ -15,6 +15,7 @@ into `~/.claude/skills`. No account ids, brand names or machine paths are hardco
 | [`chatgpt-said`](skills/chatgpt-said/) | Your client brought their own AI. Splits what the chatbot told them into individually checkable claims, classes each one against your record, and gates the reply: no dropped claim, no untraceable number, no arguing with the client, legal and tax questions referred not answered. |
 | [`sphere-signal`](skills/sphere-signal/) | Who in your database has a real, dated reason to hear from you this week. Computes reasons from your own records — an unkept promise, an unanswered question, an anniversary, a holding period, dormancy — drafts the touch, and refuses any touch with no reason, no consent, an unearned ask, or an inference about who someone is. Never sends. |
 | [`listing-price-brief`](skills/listing-price-brief/) | A seller-ready pricing brief from real comps: supported range, per-comp adjustment ledger, named exclusions, and a net sheet at three prices. Python computes every number; the model only writes narrative over them, and the gate refuses any figure it cannot trace. |
+| [`compliance-gate`](skills/compliance-gate/) | Checks any copy against the Fair Housing baseline, the client's own GUARDRAILS card, and an optional per-MLS profile. Also the one canonical rules module every other skill's compliance gate imports. |
 
 Each skill has its own README explaining the practices behind it, and a `SKILL.md` that is the
 operating manual Claude follows.
@@ -33,15 +34,15 @@ In Claude Code, two lines:
 /plugin install real-estate-skills@real-estate-pro-skills
 ```
 
-That is the whole install. All six skills are available immediately — just ask for one
+That is the whole install. All seven skills are available immediately — just ask for one
 by name, or say what you want ("price this listing", "who should I follow up with").
 
-Nothing here needs configuring to try. Three of the six — `chatgpt-said`, `sphere-signal`,
-`listing-price-brief` — run with no setup at all: no API keys, no network, no accounts.
+Nothing here needs configuring to try. Four of the seven — `chatgpt-said`, `sphere-signal`,
+`listing-price-brief`, `compliance-gate` — run with no setup at all: no API keys, no network, no accounts.
 `content-foundry` and `post-bridge-schedule` need config before they can reach your Drive
 or your social accounts, and they will tell you exactly what is missing when you run them.
 
-Prefer not to use plugins, or not in Claude Code? `./install.sh` symlinks the same six
+Prefer not to use plugins, or not in Claude Code? `./install.sh` symlinks the same seven
 skills into `~/.claude/skills`.
 
 ### Then, if you want the content pipeline

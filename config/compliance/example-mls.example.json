@@ -1,0 +1,8 @@
+{
+  "_comment": "Per-MLS/board ADDITIONS to the Fair Housing baseline. A profile can only add rules, never remove one. Copy to <your-mls>.json and pass --profile <your-mls>.",
+  "name": "Example MLS",
+  "banned": {
+    "coming soon": "this board prohibits pre-market advertising language",
+    "off-market deal": "this board treats it as an office-exclusive advertising violation"
+  }
+}
