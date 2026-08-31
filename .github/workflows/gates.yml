@@ -23,6 +23,9 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
+      - name: Dependencies (Pillow is content-foundry's one hard dep)
+        run: pip install Pillow
+
       - name: Every script compiles
         run: python3 -m py_compile $(find skills lib -name "*.py") && echo compiled
 
