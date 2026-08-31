@@ -21,9 +21,17 @@ Exit code 1 if anything fails. This is a gate, not advice.
 import argparse, json, os, re, sys, glob
 
 _HERE = os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0, os.path.realpath(os.path.join(_HERE, "..", "..", "post-bridge-schedule", "scripts")))
 sys.path.insert(0, _HERE)
-import config as _cfg  # noqa: E402
+
+
+def _clients_config():
+    """Lazy: the shared config loader validates channels.json at ITS import time,
+    and this module must work on a machine with no Post Bridge config at all —
+    the compliance rules cannot depend on someone's posting setup. Client
+    GUARDRAILS cards are simply unavailable when that config is absent."""
+    sys.path.insert(0, os.path.realpath(os.path.join(_HERE, "..", "..", "post-bridge-schedule", "scripts")))
+    import config as _cfg  # noqa: E402
+    return _cfg.load("clients")
 
 # Fair Housing baseline. Applies even with no client card present.
 BANNED = {
@@ -87,7 +95,7 @@ def load_card(slug):
     if not slug:
         return None, []
     try:
-        cc = _cfg.load("clients")
+        cc = _clients_config()
     except Exception:
         return None, []
     root = os.path.expanduser(cc.get("cache_root", "~/.cache/re-skills/clients"))

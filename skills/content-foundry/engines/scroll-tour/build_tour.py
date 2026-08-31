@@ -307,6 +307,12 @@ def main():
         "sections": sections,
         "connectors": connectors,
     }
+    font_display = ('"CF Sans", Helvetica, Arial, sans-serif'
+                    if design.get("display_type") == "sans"
+                    else '"CF Serif", Didot, "Hoefler Text", Georgia, serif')
+    font_body = ("Helvetica, Arial, sans-serif"
+                 if design.get("display_type") == "sans"
+                 else 'Georgia, "Times New Roman", serif')
     html = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -327,8 +333,8 @@ def main():
       --sw-ink: {colors.get('text-on-dark', '#ffffff')};
       --sw-ink-soft: #9fb0c0;
       --sw-accent: {gold};
-      --sw-font-display: {("\"CF Sans\", Helvetica, Arial, sans-serif" if design.get("display_type") == "sans" else '\"CF Serif\", Didot, \"Hoefler Text\", Georgia, serif')};
-      --sw-font-body: {("Helvetica, Arial, sans-serif" if design.get("display_type") == "sans" else 'Georgia, \"Times New Roman\", serif')};
+      --sw-font-display: {font_display};
+      --sw-font-body: {font_body};
     }}
     body {{ background: {navy}; margin: 0; }}
     .cf-compliance {{
