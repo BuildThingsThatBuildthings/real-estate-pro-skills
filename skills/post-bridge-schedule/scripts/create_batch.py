@@ -136,6 +136,31 @@ def lint(batch, per_ch):
     return errs
 
 
+
+def check_do_not_schedule(batch):
+    """Refuse to schedule media from a project flagged do_not_schedule.
+
+    Production projects carry a job.json next to the render tree. A True flag
+    means a human has not cleared that project for scheduling yet. Scheduling
+    held content is worse than scheduling nothing.
+    """
+    import glob as _glob
+    blocked = []
+    for post in batch.get("posts", []):
+        src = post.get("source_path") or post.get("slug", "")
+        d = os.path.dirname(os.path.abspath(src)) if os.path.sep in str(src) else None
+        while d and d != os.path.sep:
+            j = os.path.join(d, "job.json")
+            if os.path.isfile(j):
+                try:
+                    if json.load(open(j)).get("do_not_schedule") is True:
+                        blocked.append((post.get("slug"), j))
+                except Exception:
+                    pass
+                break
+            d = os.path.dirname(d)
+    return blocked
+
 def build(p):
     caps = {int(k): v for k, v in p["captions"].items()}
     cfg = [{"account_id": a,
@@ -172,7 +197,9 @@ if __name__ == "__main__":
     mode, path = sys.argv[1], sys.argv[2]
     batch = json.load(open(path))
     per_ch = live_times()
-    errs = lint(batch, per_ch)
+    held = check_do_not_schedule(batch)
+    errs = [f"{slug}: project flagged do_not_schedule in {j}" for slug, j in held]
+    errs += lint(batch, per_ch)
     if errs:
         print(f"LINT FAILED ({len(errs)} error(s)):")
         for e in errs:
