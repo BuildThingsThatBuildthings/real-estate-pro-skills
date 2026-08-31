@@ -81,3 +81,20 @@ in code. Expect a few percent baseline failure and check `post-results` after ev
   Upload once, reference many.
 - `os.path.normpath` collapses `..` textually and breaks when a skill is installed as a
   symlink. Use `realpath`.
+
+## Media purge orphans scheduled records (found 2026-08-31)
+
+Post Bridge deletes the underlying media FILE once every post referencing it has
+published — but the media RECORD stays resolvable via `GET /media/{id}`. When the
+old calendar shared media ids across many records, each publish made the shared
+file eligible for purge, orphaning still-scheduled records that referenced it.
+The orphaned record looks perfectly healthy in every API read and publishes to
+nothing.
+
+Detection: fetch the media's signed `object.url` and range-request it. `200/206`
+is alive; anything else means the file is gone even though the id resolves.
+The batch lint now does this per media id. Recovery: byte-size match against
+local sources, re-upload, repoint the record with a verified PATCH.
+
+Also: sweeping many media urls in parallel trips rate limits and reports false
+deaths. Sweep sequentially with 429 retry, or the results are noise.

@@ -130,7 +130,22 @@ def lint(batch, per_ch):
             mid = p.get(mid_key)
             if mid:
                 try:
-                    api(f"/media/{mid}")
+                    m = api(f"/media/{mid}")
+                    # The media RECORD existing is not enough. Post Bridge purges the
+                    # underlying FILE once any post using it publishes, leaving the id
+                    # resolvable and the storage 404. A record scheduled against purged
+                    # media publishes to nothing, silently. Check the signed URL.
+                    url = (m.get("object") or {}).get("url")
+                    if not url:
+                        errs.append(f"{s}: {mid_key} {mid} has no signed url (file purged?)")
+                    else:
+                        import subprocess as _sp
+                        code = _sp.run(["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}",
+                                        "-r", "0-100", url], capture_output=True,
+                                       text=True, timeout=25).stdout
+                        if code not in ("200", "206"):
+                            errs.append(f"{s}: {mid_key} {mid} storage returns {code} — "
+                                        f"file purged, re-upload from source")
                 except urllib.error.HTTPError as e:
                     errs.append(f"{s}: {mid_key} {mid} does not resolve ({e.code})")
     return errs
