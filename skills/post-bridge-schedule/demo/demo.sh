@@ -11,7 +11,14 @@ echo "  Two people share the bundle. One sets up a profile dir but forgets chann
 echo "  A scheduler that 'helpfully' falls back to the repo config would post THEIR"
 echo "  content to YOUR accounts. So it refuses instead:"
 EMPTY=$(mktemp -d)
-RE_SKILLS_CONFIG_DIR="$EMPTY" python3 -c "import sys; sys.path.insert(0,'scripts'); import config" 2>&1 | sed 's/^/    /' | head -6
+RE_SKILLS_CONFIG_DIR="$EMPTY" python3 -c "
+import sys; sys.path.insert(0,'scripts')
+try:
+    import config
+    print('    (unexpectedly loaded — this would be the bug)')
+except Exception as e:
+    print('    REFUSED:', str(e).splitlines()[0])
+    for line in str(e).splitlines()[1:3]: print('   ', line)"
 
 P "A COMPLETE PROFILE DIR IS AUTHORITATIVE — nothing from the repo leaks in:"
 cat > "$EMPTY/channels.json" <<'JSON'
