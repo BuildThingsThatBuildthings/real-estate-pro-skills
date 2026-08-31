@@ -20,3 +20,4 @@ config/clients.json
 skills/*/runs/
 node_modules/
 .remotion/
+skills/content-foundry/engines/remotion/public/job/
