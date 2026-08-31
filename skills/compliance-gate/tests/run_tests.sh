@@ -21,6 +21,13 @@ for phrase in "safe neighborhood" "perfect for" "top-rated schools" "guarantee";
   echo "$REPORT" | grep -qi "$phrase" && ok "catches '$phrase'" || bad "'$phrase' slipped through"
 done
 
+# Two evasions found by a real run, pinned forever:
+$FH check --text "one of the safest neighborhoods around" >/dev/null 2>&1 \
+  && bad "'safest neighborhoods' evades the safety rule" || ok "superlative safety claims caught"
+printf 'walking\ndistance to everything' > /tmp/cg-wrap.txt
+$FH check --file /tmp/cg-wrap.txt >/dev/null 2>&1 \
+  && bad "line-wrapped phrase evades matching" || ok "line-wrapped phrases caught"
+
 echo "== MLS profiles add, never remove =="
 P=$($FH check --text "Coming soon to market!" --profile example-mls 2>&1)
 [ $? -ne 0 ] && ok "profile phrase fires with --profile" || bad "profile phrase did not fire"

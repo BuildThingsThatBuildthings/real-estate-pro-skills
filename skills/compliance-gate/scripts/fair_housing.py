@@ -34,7 +34,10 @@ BANNED = {
     "nestled": "filler",
     "charming neighborhood": "subjective claim about an area",
     "safe neighborhood": "Fair Housing violation, never make safety claims",
+    "safest neighborhood": "Fair Housing violation, never make safety claims",
     "safe area": "Fair Housing violation",
+    "safest area": "Fair Housing violation",
+    "safest part of": "Fair Housing violation",
     "family-friendly": "demographic targeting",
     "family friendly": "demographic targeting",
     "walking distance": "use objective distance or 'near'",
@@ -126,7 +129,9 @@ def load_profile(name):
 
 
 def check(text, extra_banned=(), strict_source=True, profile=None):
-    low = text.lower()
+    # Collapse whitespace before matching: a caption wraps "walking\ndistance"
+    # across lines and a substring check on the raw text walks right past it.
+    low = re.sub(r"\s+", " ", text.lower())
     out = []
     prof = load_profile(profile) if isinstance(profile, str) else (profile or {})
     for phrase, why in {**BANNED, **{k.lower(): v for k, v in prof.get("banned", {}).items()}}.items():
