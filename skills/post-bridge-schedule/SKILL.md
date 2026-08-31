@@ -34,6 +34,39 @@ channel needs reconnecting, and whether there is enough analytics history to der
 
 ---
 
+# THE OUTBOX LIFECYCLE
+
+Finished content moves through four stages under `tools.outbox_root`:
+
+```
+awaiting-approval/   produced, not yet cleared by a human
+approved/            the human moved it here — that IS the scheduling trigger
+posted/              scheduling verified complete, all gates passed, receipt written
+failed/              a gate failed; back to a human
+```
+
+Rules:
+
+- **`approved/` is a queue, not a folder.** When anything appears there, run THE PROCESS
+  below on it. Check it at the start of any session with
+  `python3 scripts/outbox_flow.py pending`.
+- **`promote` is the only door into `posted/`.** It re-verifies every record id (status,
+  nine destinations, distinct captions), writes `SCHEDULE-RECEIPT.json` with the ids and
+  verification results, and only then moves the folder. It refuses on any failure.
+- **Never move a folder into `posted/` by hand.** A folder there asserts "scheduling
+  verified complete", and the receipt is the proof.
+- Beware husk directories: a stage folder containing only marker files can shadow the real
+  one. `promote` picks the candidate that actually contains video.
+
+```bash
+python3 scripts/outbox_flow.py status                 # classify everything against Post Bridge
+python3 scripts/outbox_flow.py pending                # what the human has queued
+python3 scripts/outbox_flow.py organize [--yes]       # one-time reorg helper
+python3 scripts/outbox_flow.py promote <project> --ids <id,...> [--yes]
+```
+
+---
+
 # THE PROCESS
 
 ## Step 0. Environment
