@@ -42,7 +42,7 @@ jobs:
       - name: Gate suites (must pass, and must contain failure assertions)
         run: |
           set -e
-          for s in chatgpt-said sphere-signal listing-price-brief compliance-gate; do
+          for s in chatgpt-said sphere-signal listing-price-brief compliance-gate brand-voice content-foundry post-bridge-schedule; do
             echo "::group::$s"
             bash "skills/$s/tests/run_tests.sh"
             echo "::endgroup::"
@@ -58,7 +58,7 @@ jobs:
       - name: Demos run clean
         run: |
           set -e
-          for s in chatgpt-said sphere-signal listing-price-brief compliance-gate; do
+          for s in chatgpt-said sphere-signal listing-price-brief compliance-gate brand-voice content-foundry post-bridge-schedule; do
             OUT=$(bash "skills/$s/demo/demo.sh" 2>&1)
             if echo "$OUT" | grep -q "Traceback\|command not found\|No such file"; then
               echo "$s demo broke:"; echo "$OUT" | tail -20; exit 1

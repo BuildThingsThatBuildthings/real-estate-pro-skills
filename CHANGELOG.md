@@ -6,6 +6,20 @@ A breaking change to any schema bumps its `/vN` and lands here with a migration 
 Rule additions to `compliance-gate` are NOT breaking changes — gates are allowed to get
 stricter without notice, because that is their job.
 
+## 1.2.0 — 2026-08-31
+
+- **Every skill now has a test suite and a demo** — 94 assertions across seven suites.
+  - `brand-voice` gained `voice_lint.py`: the mechanical half of the voice audit is now
+    enforced (banned words from the pack, hashtag piles, duplicated captions, links in an
+    X body, hookless first lines, unsourced figures). Voice itself stays a human judgment.
+  - `content-foundry` gained offline gate tests (slop gate + the compliance shim) and a demo.
+  - `post-bridge-schedule` gained hermetic tests pinning its safety law: an explicit
+    profile dir is authoritative and a missing file there refuses rather than falling back
+    to the repo's accounts.
+- CI runs all seven suites and all seven demos.
+- Two fixtures were corrected by the gates themselves during authoring (hookless first
+  lines; em-dash density) — recorded here because it is the design working as intended.
+
 ## 1.1.0 — 2026-08-30
 
 - **New skill: `compliance-gate`** — the Fair Housing rules promoted to a standalone,

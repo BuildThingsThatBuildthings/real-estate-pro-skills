@@ -65,6 +65,18 @@ sounds on each surface it uses. Typical differences:
 
 ## Audit before returning
 
+The mechanical half is enforced, not requested:
+
+```bash
+python3 scripts/voice_lint.py check --pack config/voice/<slug>.md --draft draft.json
+```
+
+`draft.json` is `{"captions": {"<channel>": "<text>"}}`. Exit 1 refuses: banned words from
+the pack, hashtag piles, a caption copied across channels, links in an X body, first lines
+too long to be hooks, unsourced figures. Fix the draft, not the linter.
+
+The other half stays with you, judged against the pack's examples:
+
 - [ ] pack loaded for the right brand, and the draft matches it
 - [ ] first line works as a standalone hook
 - [ ] no banned words from the pack or the shared rules

@@ -29,6 +29,15 @@ example**, and a one sentence quality test.
 
 The off brand example matters as much as the on brand one. It is the fastest way to catch drift.
 
+## The enforced half
+
+`scripts/voice_lint.py` settles the mechanical questions — banned words from the pack,
+hashtag piles, a caption copied across channels, links in an X body, first lines too long
+to hook, unsourced figures — with an exit code. Whether the draft *sounds* like the brand
+stays a human judgment made against the pack's on-brand and off-brand examples. A linter
+that claims to measure voice is lying; one that catches the mechanical failures frees the
+reader to judge only voice.
+
 ## The rule that matters most
 
 One idea, written once per channel, never copied. Copying one caption across surfaces throws away
