@@ -18,3 +18,5 @@ captions/
 SCHEDULE-REVIEW.md
 config/clients.json
 skills/*/runs/
+node_modules/
+.remotion/

@@ -58,6 +58,22 @@ W = m["size"][0]; sr = m["safe_zone"]["right"]
 comp = [e for e in m["elements"] if e["type"] == "compliance"]
 sys.exit(0 if comp and all(e["box"][2] <= W - sr + 1 for e in comp) and any(e.get("lines", 1) >= 2 for e in comp) else 1)
 PY
+# vertical crops bias downward: sky/ceiling is dead space in listing photos
+python3 - <<'PY' && ok "cover_crop keeps the subject low on vertical crops" || bad "cover_crop centers vertically (ceiling-heavy)"
+import sys; sys.path.insert(0, "scripts")
+from PIL import Image
+import composite
+spy = {}
+orig = Image.Image.crop
+Image.Image.crop = lambda self, b: spy.update(b=b) or orig(self, b)
+composite.cover_crop(Image.new("RGB", (2048, 1360)), (1200, 630))
+Image.Image.crop = orig
+y = spy["b"][1]
+nh = 1360 * (1200 / 2048)
+centered = (nh - 630) // 2
+sys.exit(0 if y > centered else 1)
+PY
+
 # demo persona without --allow-demo must refuse
 python3 scripts/composite.py --base "$TMP/base.jpg" --agent tests/fixtures/agent \
   --channel ig --headline "x" --out "$TMP/refused.jpg" >/dev/null 2>&1 \

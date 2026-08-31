@@ -144,14 +144,22 @@ def fit_text(draw, text, font_path, max_width, max_lines, start_size, min_size, 
 
 
 def cover_crop(img, target):
-    """Scale-and-center-crop to exactly target dims. Never distorts aspect."""
+    """Scale-and-crop to exactly target dims. Never distorts aspect.
+
+    Horizontal crops center. Vertical crops bias DOWNWARD: real-estate
+    photography keeps its subject in the lower two-thirds (counters, furniture,
+    the yard) and its dead space at the top (ceiling, sky), so a centered crop
+    of a landscape photo onto a portrait canvas reads ceiling-heavy. The 38%
+    anchor keeps roughly a rule-of-thirds headroom instead."""
     tw, th = target
     sw, sh = img.size
     scale = max(tw / sw, th / sh)
     nw, nh = max(tw, int(round(sw * scale))), max(th, int(round(sh * scale)))
     img = img.resize((nw, nh), Image.Resampling.LANCZOS)
-    return img.crop(((nw - tw) // 2, (nh - th) // 2,
-                     (nw - tw) // 2 + tw, (nh - th) // 2 + th))
+    x = (nw - tw) // 2
+    y = min(nh - th, int(round((nh - th) * 0.62)))  # 62% of slack above → subject sits low
+    y = max(0, y)
+    return img.crop((x, y, x + tw, y + th))
 
 
 def region_mean(img, box):
