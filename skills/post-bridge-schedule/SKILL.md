@@ -191,6 +191,23 @@ Assemble to `batch.json`:
            "captions":{"<account_id>":"...", "...": "one per channel"}}]}
 ```
 
+## Step 10b. Concept collision check
+
+"Never uploaded" must mean more than bytes. Before the lint, search every posted and
+scheduled record's captions for the batch's distinctive phrases and themes. Three levels:
+
+1. **Byte level** — exact file already in the media library (the lint's liveness pass covers
+   the ids you supply; check the folder against `pb.py media` sizes before uploading).
+2. **Record level** — the same clip already scheduled or posted as a different upload.
+3. **Concept level** — the same argument already published as different footage. Search for
+   the batch's distinctive phrases across all records and report recent thematic overlaps
+   with dates. A repeated thesis is fine; a repeated thesis eleven days apart is not. Space
+   overlapping concepts by three weeks or more, or hold them for the user's call.
+
+Also check the project's `distribution/` folder and any `INGESTED` markers: a long-form
+parent already live on the channel is expected (shorts-with-lead), but another pipeline
+having consumed the same folder is a race worth ruling out before creating records.
+
 ## Step 11. Preflight lint
 
 ```bash
