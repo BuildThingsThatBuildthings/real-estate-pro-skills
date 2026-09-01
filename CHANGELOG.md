@@ -6,6 +6,20 @@ A breaking change to any schema bumps its `/vN` and lands here with a migration 
 Rule additions to `compliance-gate` are NOT breaking changes — gates are allowed to get
 stricter without notice, because that is their job.
 
+## 1.3.0 — 2026-09-01
+
+- **New desktop lane: `content-machine/`** — the seven-station weekly content loop
+  (Intake → Log → Brand compare → Generate → Approve → Schedule → Learn) packaged for
+  non-technical owners running the desktop app of Claude, ChatGPT, or Gemini. One pasted
+  prompt (`content-machine/INSTALL-PROMPT.md`) fetches the skill and card templates from
+  this repo, installs into the app's persistent layer (Project / Gem), connects Google
+  Drive, builds the four-folder approval system, and interviews the owner to fill the four
+  context cards. `POWER-UPS.md` documents the optional tiers (agent browser, video lane,
+  generation accounts), all degrade-gracefully. The crosswalk in `content-machine/README.md`
+  maps each station onto the advanced-lane skills; no skill was refactored.
+- README and getting-started now lead with the desktop lane; the plugin/`install.sh` path
+  is labeled the advanced Claude Code lane.
+
 ## 1.2.0 — 2026-08-31
 
 - **Every skill now has a test suite and a demo** — 94 assertions across seven suites.

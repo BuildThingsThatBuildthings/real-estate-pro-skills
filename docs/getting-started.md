@@ -1,5 +1,9 @@
 # Getting started
 
+**Non-technical?** Skip this page. Paste [content-machine/INSTALL-PROMPT.md](../content-machine/INSTALL-PROMPT.md)
+into Claude, ChatGPT, or Gemini and it installs the Content Machine's desktop lane for you —
+no terminal, no config. This page is the advanced Claude Code lane.
+
 ## 1. Install (two lines, in Claude Code)
 
 ```

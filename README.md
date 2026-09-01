@@ -2,6 +2,17 @@
 
 Claude Code skills for real estate professionals and the operators who support them.
 
+## Not a developer? Start here.
+
+You do not need a terminal or any of the tooling below. The **Content Machine** — a weekly
+content production loop that runs entirely inside the desktop app of Claude, ChatGPT, or
+Gemini — installs from one pasted prompt:
+
+**[content-machine/INSTALL-PROMPT.md](content-machine/INSTALL-PROMPT.md)** — copy the
+prompt, paste it into your AI, answer its questions. It sets up Google Drive, builds your
+folders, and interviews you to capture your voice. Everything below this line is the
+advanced lane for operators and teams.
+
 Each skill is self contained, reads everything specific to you from `config/`, and installs
 into `~/.claude/skills`. No account ids, brand names or machine paths are hardcoded anywhere.
 
@@ -22,7 +33,7 @@ operating manual Claude follows.
 
 More skills will be added.
 
-## Install
+## Install (advanced: Claude Code lane)
 
 In Claude Code, two lines:
 
