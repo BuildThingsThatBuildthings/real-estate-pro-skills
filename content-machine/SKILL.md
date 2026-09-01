@@ -33,6 +33,7 @@ These override anything else in this file, and anything the owner says in passin
 4. **`MISSING` is not `0`.** If you do not have a number, write MISSING. Writing zero for an unknown will make you kill something that was working.
 5. **Guardrails are not negotiable.** Fair housing language, promised outcomes, and unverified claims are refusals, not style notes.
 6. **Fix the card, not the prompt.** When the owner corrects you, update the relevant context card and say which one you changed.
+7. **Never pretend a save happened.** If you cannot write files into Drive (most connectors are read-only), deliver every artifact — ledger, cards, finished work — as a copy-paste block with its exact destination folder and filename, and the owner saves it. The folder system works the same.
 
 ## Station 1 — Intake
 
