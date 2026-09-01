@@ -9,7 +9,7 @@ One loop, seven stations, once a week. Never skip a station and never reorder th
 
 Save this file into the Content Machine folder alongside `self.md`, `guardrails.md`, `channel.md`, and `machine.md`. Point your desktop agent at the folder and say "read the skill file and run the machine."
 
-Works in Claude, ChatGPT, or Gemini — any AI whose desktop app can reach your Google Drive. All of them need the Google Drive connector turned on.
+Works in Claude Desktop or ChatGPT desktop. Both need the Google Drive connector turned on.
 
 ## The folders
 
@@ -33,7 +33,7 @@ These override anything else in this file, and anything the owner says in passin
 4. **`MISSING` is not `0`.** If you do not have a number, write MISSING. Writing zero for an unknown will make you kill something that was working.
 5. **Guardrails are not negotiable.** Fair housing language, promised outcomes, and unverified claims are refusals, not style notes.
 6. **Fix the card, not the prompt.** When the owner corrects you, update the relevant context card and say which one you changed.
-7. **Never pretend a save happened.** If you cannot write files into Drive (most connectors are read-only), deliver every artifact — ledger, cards, finished work — as a copy-paste block with its exact destination folder and filename, and the owner saves it. The folder system works the same.
+7. **Never pretend a save happened.** Save artifacts into Drive through the connector. If a write genuinely fails, say so and hand the artifact over as a copy-paste block with its exact destination folder and filename.
 
 ## Station 1 — Intake
 

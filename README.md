@@ -5,11 +5,11 @@ Claude Code skills for real estate professionals and the operators who support t
 ## Not a developer? Start here.
 
 You do not need a terminal or any of the tooling below. The **Content Machine** — a weekly
-content production loop that runs entirely inside the desktop app of Claude, ChatGPT, or
-Gemini — installs from one pasted prompt:
+content production loop that runs entirely inside the desktop app of Claude or ChatGPT
+— installs from one pasted prompt:
 
 **[content-machine/INSTALL-PROMPT.md](content-machine/INSTALL-PROMPT.md)** — copy the
-prompt, paste it into your AI, answer its questions. It sets up Google Drive, builds your
+prompt, paste it into Claude or ChatGPT, answer its questions. It sets up Google Drive, builds your
 folders, and interviews you to capture your voice. Everything below this line is the
 advanced lane for operators and teams.
 

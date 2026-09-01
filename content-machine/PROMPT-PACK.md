@@ -2,7 +2,7 @@
 
 Seven stations, seven prompts. Copy-paste ready.
 
-These work in Claude, ChatGPT, or Gemini. All of them need the Google Drive connector turned on and pointed at your Content Machine folder.
+These work in Claude Desktop or ChatGPT desktop. Both need the Google Drive connector turned on and pointed at your Content Machine folder.
 
 **Before any of these:** no client names, no addresses, no phone numbers, no emails, no financials go into these tools. Placeholders work fine.
 

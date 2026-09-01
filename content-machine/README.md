@@ -1,10 +1,10 @@
 # The Content Machine — desktop lane
 
-The weekly content production loop from AI Acceleration's Innovation Lab class *"Elmer: The Machine That Makes the Week's Content"* — packaged so a non-technical real estate professional can run it entirely inside the desktop app of Claude, ChatGPT, or Gemini. No terminal, no code, no install beyond one pasted prompt.
+The weekly content production loop from AI Acceleration's Innovation Lab class *"Elmer: The Machine That Makes the Week's Content"* — packaged so a non-technical real estate professional can run it entirely inside the desktop app of Claude or ChatGPT. No terminal, no code, no install beyond one pasted prompt.
 
 ## Install
 
-Copy the prompt in [INSTALL-PROMPT.md](INSTALL-PROMPT.md) and paste it into your AI. It fetches these files, installs the skill into your app's persistent layer (a Claude Project, a ChatGPT Project, or a Gemini Gem), connects Google Drive, builds the folder system, and interviews you to fill your four context cards. Ten to fifteen minutes, all questions in plain English.
+Copy the prompt in [INSTALL-PROMPT.md](INSTALL-PROMPT.md) and paste it into your AI. It fetches these files, installs the skill into your app's persistent layer (a Claude Project or a ChatGPT Project), connects Google Drive, builds the folder system, and interviews you to fill your four context cards. Ten to fifteen minutes, all questions in plain English.
 
 ## What is in here
 

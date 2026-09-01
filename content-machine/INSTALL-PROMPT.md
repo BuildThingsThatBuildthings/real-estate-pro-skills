@@ -1,6 +1,6 @@
 # The Content Machine — One-Paste Install
 
-Copy everything below the line and paste it into Claude, ChatGPT, or Gemini. That is the entire install. The AI reads the instructions, fetches what it needs from the internet, and walks you through setup one question at a time.
+Copy everything below the line and paste it into Claude or ChatGPT. That is the entire install. The AI reads the instructions, fetches what it needs from the internet, and walks you through setup one question at a time.
 
 ---
 
@@ -9,7 +9,7 @@ You are installing **the Content Machine** for me. I am a real estate profession
 Follow the steps below **in order**. Rules for how you behave during this install:
 
 - Speak plainly. One question at a time. Wait for my answer before moving on.
-- Assume you can READ my Google Drive but probably cannot WRITE files into it — most connectors are read-only. Whenever something needs to be saved to Drive (a card, a ledger, finished work), give it to me as a copy-paste block with the exact folder and filename, and I save it. Never pretend a save happened.
+- When something needs to be saved to Drive (a card, a ledger, finished work), save it there yourself through the connector. If a write genuinely fails, say so, hand me the content as a copy-paste block with the exact folder and filename, and never pretend a save happened.
 - Menus move. When you describe what to click, say where it usually lives, then ask me what I actually see and adapt. Never insist on a menu path I tell you is not there.
 - Never mention terminals, command lines, code, file paths, or APIs. If a step ever seems to require one, find the click-based way or tell me plainly that my app cannot do that step, and continue with the rest.
 - Never ask me to paste a password, API key, or account credential into this chat. Connections happen in the app's own settings screens, and you walk me to them by describing what to click.
@@ -32,7 +32,7 @@ SKILL.md is the operating manual you will follow every week — seven stations: 
 
 ## Step 2 — Check my plan
 
-The machine works best with your app's Google Drive access, which on Claude and ChatGPT requires a paid plan. Gemini includes Drive access and Gems on its free tier. Ask me which app and plan I am on. If my plan cannot use connectors, say plainly: the cards and the skill will still work by uploading files into our chats, but the automatic Drive loop will not — and then continue the install anyway with that adjustment.
+The machine needs your app's Google Drive connector, and connectors require a paid plan (Claude Pro, ChatGPT Plus). Ask me which app and plan I am on. If my plan cannot use connectors, say plainly: the cards and the skill will still work by uploading files into our chats, but the automatic Drive loop will not — and then continue the install anyway with that adjustment.
 
 ## Step 3 — Install yourself permanently
 
@@ -40,14 +40,13 @@ I should never have to paste this again. Detect which app you are and set the ma
 
 - **If you are Claude:** create a Project called "Content Machine." Put the full text of SKILL.md into the Project's instructions. Tell me exactly what to click if you cannot create it yourself.
 - **If you are ChatGPT:** create a Project called "Content Machine" and put the full text of SKILL.md into its instructions. Tell me exactly what to click if you cannot create it yourself. If Projects are unavailable to me, put a condensed version into custom instructions (they have a tight length limit, so condense hard and say what you cut) and keep the full SKILL.md saved in my Drive folder as the reference copy.
-- **If you are Gemini:** Gems cannot be created from inside a chat, so walk me through it: gemini.google.com in my browser (there is no separate desktop app — the browser is the app), Explore Gems, New Gem, name it "Content Machine", and I paste SKILL.md — which you give me as one copy block — into its instructions.
 
-Confirm to me in one sentence where the machine now lives, and that opening that Project (or Gem) is how I "turn on" the machine from now on.
+Confirm to me in one sentence where the machine now lives, and that opening that Project is how I "turn on" the machine from now on.
 
 ## Step 4 — Connect Google Drive and build the folders
 
 1. Walk me through turning on the **Google Drive connector** in this app's settings — describe each click, and tell me a Google sign-in window will open and that it is normal.
-2. Have me create one folder in my Drive called **Content Machine**, containing four subfolders. Give me the four names as one copy-paste block and tell me to paste rather than retype them — the dash in the middle is a special character, and a typed hyphen makes a name you and I will never quite agree on:
+2. Once connected, create one folder in my Drive called **Content Machine**, containing four subfolders exactly named as below. If you cannot create them, have me do it — give me the four names as one copy-paste block and tell me to paste rather than retype them, because the dash in the middle is a special character:
    - `00 – Weekly Context`
    - `01 – Waiting`
    - `02 – Approved`
@@ -67,7 +66,7 @@ Save all four finished cards into the **Content Machine** folder in Drive (next 
 
 ## Step 6 — Prove it works
 
-Ask me to drop two or three real things into `00 – Weekly Context` right now — a photo I own, a screenshot of a real client question, anything from this week. Two honest caveats to handle without drama: new Drive files can take a few minutes to become visible to you, so if you cannot see them yet, have me upload the same files straight into this chat and run on those. And if one is a voice memo you cannot listen to, say so and ask me to type one line of what it says — never skip it silently. Then run **Station 2 (Log)** from SKILL.md: read the files, write the asset ledger as a copy-paste block I save into the folder, and show me one row plus the "strongest item" line. If a client question was in there, point at it and say why it outranks everything else in the folder.
+Ask me to drop two or three real things into `00 – Weekly Context` right now — a photo I own, a screenshot of a real client question, anything from this week. Two honest caveats to handle without drama: new Drive files can take a few minutes to become visible to you, so if you cannot see them yet, have me upload the same files straight into this chat and run on those. And if one is a voice memo you cannot listen to, say so and ask me to type one line of what it says — never skip it silently. Then run **Station 2 (Log)** from SKILL.md: read the files, write the asset ledger, save it into the Content Machine folder, and show me one row plus the "strongest item" line. If a client question was in there, point at it and say why it outranks everything else in the folder.
 
 That is the machine running. Not a demo — my files, my folder, my voice cards.
 
