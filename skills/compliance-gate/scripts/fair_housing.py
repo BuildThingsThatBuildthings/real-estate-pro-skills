@@ -155,8 +155,15 @@ def check(text, extra_banned=(), strict_source=True, profile=None):
     if strict_source:
         for pat, what in NEEDS_SOURCE:
             m = re.search(pat, low)
-            if m and "verify" not in low and "source" not in low and "per " not in low:
-                out.append(("NEEDS_SOURCE", m.group(0), f"{what} needs a source or a VERIFY marker"))
+            # First-person experiential attribution counts as sourcing: "in my
+            # business, ten answers cover 80%" is the speaker's own record, not
+            # a world-claim. Unattributed second-person figures still fail.
+            experiential = any(tok in low for tok in (
+                "in my business", "in my experience", "in my own", "my own business",
+                "i get asked", "he gets asked", "she gets asked",
+                "i've seen", "i have seen"))
+            if m and not experiential and "verify" not in low and "source" not in low and "per " not in low:
+                out.append(("NEEDS_SOURCE", m.group(0), f"{what} needs a source, a VERIFY marker, or first-person attribution"))
     return out
 
 
