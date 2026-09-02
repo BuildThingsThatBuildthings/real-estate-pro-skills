@@ -46,6 +46,13 @@ python3 scripts/repair.py scan                   # collisions, duplicates, empty
 python3 scripts/create_batch.py lint batch.json  # preflight, writes nothing
 ```
 
+## The only collision is a time collision
+
+Themes repeat on purpose. A post is never moved, delayed, or held because its idea resembles
+another post's idea — that is editorial control the tool has no business exercising. The only
+collision the pipeline recognises is two posts hitting the same channel inside
+`min_gap_minutes`. When given a window and a count, every post lands inside that window.
+
 ## Gotchas worth knowing before you extend it
 
 - `ffmpeg` consumes stdin inside a `while read` loop and truncates filenames. Pass `-nostdin`

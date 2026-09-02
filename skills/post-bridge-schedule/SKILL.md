@@ -224,22 +224,26 @@ Assemble to `batch.json`:
            "captions":{"<account_id>":"...", "...": "one per channel"}}]}
 ```
 
-## Step 10b. Concept collision check
+## Step 10b. Duplicate check — bytes and records only
 
-"Never uploaded" must mean more than bytes. Before the lint, search every posted and
-scheduled record's captions for the batch's distinctive phrases and themes. Three levels:
+Two levels, both about *the same asset shipping twice*:
 
-1. **Byte level** — exact file already in the media library (the lint's liveness pass covers
-   the ids you supply; check the folder against `pb.py media` sizes before uploading).
-2. **Record level** — the same clip already scheduled or posted as a different upload.
-3. **Concept level** — the same argument already published as different footage. Search for
-   the batch's distinctive phrases across all records and report recent thematic overlaps
-   with dates. A repeated thesis is fine; a repeated thesis eleven days apart is not. Space
-   overlapping concepts by three weeks or more, or hold them for the user's call.
+1. **Byte level** — the exact file is already in the media library.
+2. **Record level** — the same clip is already scheduled or posted as a different upload.
 
-Also check the project's `distribution/` folder and any `INGESTED` markers: a long-form
-parent already live on the channel is expected (shorts-with-lead), but another pipeline
-having consumed the same folder is a race worth ruling out before creating records.
+Also check the project's `distribution/` folder and any `INGESTED` markers, to rule out
+another pipeline having already consumed the folder.
+
+**There is no such thing as a concept collision. Do not invent one.**
+
+Themes are supposed to repeat, vary, and overlap. Two posts making a similar argument days
+apart is normal content, not a defect. Never move, delay, or hold a post because its idea
+resembles another post's idea. **The only collision that exists is a time collision on the
+same channel** (Step 7, `min_gap_minutes`).
+
+If a batch is given a window and a count, every post lands inside that window. Do not
+reduce the count and do not push posts outside the window for editorial reasons. Placement
+is scheduling arithmetic, not an editorial opinion.
 
 ## Step 11. Preflight lint
 
