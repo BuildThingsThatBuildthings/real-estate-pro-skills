@@ -27,20 +27,24 @@ jobs:
         run: pip install Pillow
 
       - name: Every script compiles
-        run: python3 -m py_compile $(find skills lib -name "*.py") && echo compiled
+        run: python3 -m py_compile $(find skills lib scripts tests -name "*.py") && echo compiled
 
       - name: Marketplace manifest is valid and complete
         run: |
           python3 -c "
           import json, os
           m = json.load(open('.claude-plugin/marketplace.json'))
-          skills = m['plugins'][0]['skills']
+          skills = [s for plugin in m['plugins'] for s in plugin['skills']]
+          assert len({p['name'] for p in m['plugins']}) == len(m['plugins']), 'duplicate plugin names'
           missing = [s for s in skills if not os.path.isfile(os.path.join(s, 'SKILL.md'))]
           assert not missing, f'manifest lists skills with no SKILL.md: {missing}'
           on_disk = {f'./skills/{d}' for d in os.listdir('skills') if os.path.isfile(f'skills/{d}/SKILL.md')}
           unlisted = on_disk - set(skills)
           assert not unlisted, f'skills on disk missing from manifest: {unlisted}'
           print(len(skills), 'skills, manifest complete')"
+
+      - name: Starter installer dry-run, conflict, readback and repeat tests
+        run: python3 -m unittest discover -s tests -p test_starter_install.py -v
 
       - name: Gate suites (must pass, and must contain failure assertions)
         run: |
