@@ -6,9 +6,21 @@
   },
   "metadata": {
     "description": "Claude Code skills for real estate professionals and the operators who support them",
-    "version": "1.3.0"
+    "version": "1.4.0"
   },
   "plugins": [
+    {
+      "name": "aia-starter",
+      "description": "AI Acceleration starter: context card, content, listing launch and listing photos in your existing AI. Includes a guided business and connector setup prompt.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/aia-context-card",
+        "./skills/aia-content",
+        "./skills/aia-listing-machine",
+        "./skills/aia-listing-photos"
+      ]
+    },
     {
       "name": "real-estate-skills",
       "description": "All seven skills: brand-locked content production, analytics-driven scheduling, brand voice, client-AI reconciliation, database follow-up, comp-backed pricing briefs, and a standalone Fair Housing compliance gate. Config-driven, no vendor lock-in, nothing publishes on its own.",

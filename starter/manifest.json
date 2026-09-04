@@ -1,0 +1,39 @@
+{
+  "schema": "aia-starter-skills/v1",
+  "version": "1.0.0",
+  "authority": {
+    "offerId": "ai-acceleration-real-estate-skool",
+    "claimIds": [
+      "skool-real-estate-tooling",
+      "skool-real-estate-practical-workflows"
+    ],
+    "masterVersion": "2026-09-04.1",
+    "masterSha256": "800847965288e71a2c5d7f157ccae05411747352c13ffe4da68305dc056450d4"
+  },
+  "skills": [
+    {
+      "name": "aia-context-card",
+      "title": "My Context Card",
+      "path": "skills/aia-context-card",
+      "description": "Build or improve a real estate professional\u2019s reusable identity, voice, business context and working preferences. Use when setting up AI context or correcting how AI represents the member."
+    },
+    {
+      "name": "aia-content",
+      "title": "Content",
+      "path": "skills/aia-content",
+      "description": "Plan and draft real estate content from the member\u2019s context, voice and source material. Use for posts, emails, content angles and production briefs; generation of images or video requires actual available tools."
+    },
+    {
+      "name": "aia-listing-machine",
+      "title": "Listing Machine",
+      "path": "skills/aia-listing-machine",
+      "description": "Turn supplied property facts into reusable listing context and requested launch materials. Use for listing descriptions, launch emails, open-house content or seller updates, not appraisals or unsupported pricing advice."
+    },
+    {
+      "name": "aia-listing-photos",
+      "title": "Listing Photos",
+      "path": "skills/aia-listing-photos",
+      "description": "Review listing images, prepare specific staging or editing directions, and use an available image tool to produce reviewable candidates. Use when the member supplies listing photos or requests staging; do not imply image generation is available without a callable tool."
+    }
+  ]
+}

@@ -2,19 +2,31 @@
 
 Claude Code skills for real estate professionals and the operators who support them.
 
-## Not a developer? Start here.
+## Start here: give the setup prompt to your AI
 
-You do not need a terminal or any of the tooling below. The **Content Machine** — a weekly
-content production loop that runs entirely inside the desktop app of Claude or ChatGPT
-— installs from one pasted prompt:
+**[Copy the AI Acceleration installation prompt](INSTALL-PROMPT.md).** Your AI checks its installation capabilities, installs the four starter skills where supported, interviews you about your business, and helps connect the email, calendar, contacts and files you actually use. It verifies each connection and produces a first useful result.
 
-**[content-machine/INSTALL-PROMPT.md](content-machine/INSTALL-PROMPT.md)** — copy the
-prompt, paste it into Claude or ChatGPT, answer its questions. It sets up Google Drive, builds your
-folders, and interviews you to capture your voice. Everything below this line is the
-advanced lane for operators and teams.
+The starter skills are **My Context Card, Content, Listing Machine and Listing Photos**. They work with your AI and the context you choose to share. MCP is optional future connectivity; it is not needed for the starter release. Some AI apps require a skill upload or use the instructions only in the current conversation. The prompt explains the difference.
 
-Each skill is self contained, reads everything specific to you from `config/`, and installs
-into `~/.claude/skills`. No account ids, brand names or machine paths are hardcoded anywhere.
+[Client setup guide](starter/CLIENT-GUIDE.md) · [Starter manifest](starter/manifest.json)
+
+In Claude Code, the starter plugin is available after registering this marketplace:
+
+```
+/plugin marketplace add BuildThingsThatBuildthings/real-estate-pro-skills
+/plugin install aia-starter@real-estate-pro-skills
+```
+
+The filesystem installer supports a selected Claude or Codex project workspace. Inspect its dry-run before applying:
+
+```
+python3 scripts/install_starter.py --agent claude --workspace /path/to/your/workspace
+python3 scripts/install_starter.py --agent claude --workspace /path/to/your/workspace --apply
+```
+
+Use `--agent codex` for a Codex workspace. Installation verifies files; invoke a skill afterward to verify your AI has loaded it. Existing differing skill files are preserved and reported as conflicts.
+
+The advanced seven-skill bundle below remains available for configured production workflows. The separate [Content Machine setup](content-machine/INSTALL-PROMPT.md) applies to that workflow and is not the starter installation path.
 
 ## Skills
 
