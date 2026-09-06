@@ -19,3 +19,7 @@ produce:
   (same placement rules as `engine-stills.md`), then verified.
 - Credit ceiling: check remaining balance before generating; abort-and-ask rather than silently
   overspending. Cost-per-asset is logged like every other engine.
+
+## Available source-photo motion route
+
+For a specific real listing, use the source-preserving Remotion composition documented in `../../aia-listing-campaign/references/motion-edit.md`. It animates original photos through bounded 2D transforms and clearly cut scene changes. This is an implemented photo-animation route, not completion of this future generative engine. If an external service rejects a job for unavailable credits, record the rejection and use an approved existing engine; never silently buy credits or substitute unrelated footage. Do not call a photo montage a generated walkthrough.

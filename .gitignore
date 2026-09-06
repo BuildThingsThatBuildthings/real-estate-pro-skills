@@ -21,3 +21,7 @@ skills/*/runs/
 node_modules/
 .remotion/
 skills/content-foundry/engines/remotion/public/job/
+
+# Local demonstration assets are generated per run, never shipped with skills.
+skills/content-foundry/engines/remotion/public/fictional/
+skills/content-foundry/engines/remotion/node_modules

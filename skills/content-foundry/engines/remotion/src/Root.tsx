@@ -4,6 +4,8 @@ import {propsSchema, VideoProps} from './shared';
 import {Walkthrough, walkthroughDuration} from './Walkthrough';
 import {SalesBrief, salesBriefDuration} from './SalesBrief';
 import {Teaser, teaserDuration} from './Teaser';
+import {CampaignFilm} from './campaign/CampaignFilm';
+import {CampaignProps} from './campaign/types';
 
 // 1080x1920 @ 30fps — IG Reels/Story per channel-specs.md.
 // Three products from one props file (video_props.py v2):
@@ -41,6 +43,9 @@ const DEFAULTS: VideoProps = {
 export const Root: React.FC = () => {
   return (
     <>
+      <Composition id="CampaignFilm" component={CampaignFilm} width={1080} height={1920} fps={30} durationInFrames={300}
+        defaultProps={{width:1080,height:1920,duration:300,brand:{name:'Fictional Preview',agent:'Demo',brokerage:'Demo Brokerage',phone:'',officePhone:'',website:'',license:'',red:'#D71920',dark:'#171717',paper:'#f7f7f5',font:'job/inter.woff2',logo:'job/logo.png'},scenes:[],captions:[]} as CampaignProps}
+        calculateMetadata={({props})=>({width:props.width,height:props.height,durationInFrames:props.duration})}/>
       <Composition
         id="Walkthrough"
         component={Walkthrough}

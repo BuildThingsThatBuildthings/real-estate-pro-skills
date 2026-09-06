@@ -21,6 +21,10 @@ Invocations:
 - `/content-foundry resume {run-dir}` — resume at the first non-done stage
 - `/content-foundry roster --agents a,b,c "{prompt}"` — same job across N agents (Phase 3)
 
+## Complete listing campaigns
+
+For a multi-format listing launch, use `../aia-listing-campaign/SKILL.md` after the context pull and route the location narrative through `../aia-neighborhood-story/SKILL.md`. These extend this pipeline with current/historical research, a claim and rights ledger, separately composed films, agent recording scripts, and a verified Drive handoff. An already-approved user plan can satisfy the brief review within its authorized scope; record it rather than asking again.
+
 ## Non-negotiable laws
 
 1. **The folder is the tenancy boundary.** Everything brand-related comes from

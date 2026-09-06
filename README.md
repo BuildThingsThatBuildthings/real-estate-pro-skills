@@ -33,6 +33,8 @@ The advanced seven-skill bundle below remains available for configured productio
 | Skill | What it does |
 |---|---|
 | [`post-bridge-schedule`](skills/post-bridge-schedule/) | Folder of finished video in, verified scheduled social records out. Derives posting windows from your own analytics, enforces a cadence ramp, detects same-channel collisions, writes one caption per channel, and verifies every write. |
+| [`aia-listing-campaign`](skills/aia-listing-campaign/) | Research and produce a complete listing media suite with a claim/rights ledger, source-photo motion, recording scripts, captions, QA and Drive handoff. |
+| [`aia-neighborhood-story`](skills/aia-neighborhood-story/) | Evidence-linked neighborhood treatment, script, storyboard, acquisition and sound plan, plus independently framed story films. |
 | [`content-foundry`](skills/content-foundry/) | Brand locked content production. Pulls a client's brand and weekly context from Google Drive, unifies a mixed asset dump, researches, writes a reviewable brief, generates and composites on brand assets, gates on Fair Housing and slop, and delivers a finished set to the client's `01 – Waiting` folder. |
 | [`brand-voice`](skills/brand-voice/) | Loads a brand's voice pack before any public facing copy is written, and audits the draft against it. |
 | [`chatgpt-said`](skills/chatgpt-said/) | Your client brought their own AI. Splits what the chatbot told them into individually checkable claims, classes each one against your record, and gates the reply: no dropped claim, no untraceable number, no arguing with the client, legal and tax questions referred not answered. |
@@ -57,15 +59,15 @@ In Claude Code, two lines:
 /plugin install real-estate-skills@real-estate-pro-skills
 ```
 
-That is the whole install. All seven skills are available immediately — just ask for one
+That is the whole install. All nine skills are available immediately — just ask for one
 by name, or say what you want ("price this listing", "who should I follow up with").
 
-Nothing here needs configuring to try. Four of the seven — `chatgpt-said`, `sphere-signal`,
+Nothing here needs configuring to try. Four of the nine — `chatgpt-said`, `sphere-signal`,
 `listing-price-brief`, `compliance-gate` — run with no setup at all: no API keys, no network, no accounts.
 `content-foundry` and `post-bridge-schedule` need config before they can reach your Drive
 or your social accounts, and they will tell you exactly what is missing when you run them.
 
-Prefer not to use plugins, or not in Claude Code? `./install.sh` symlinks the same seven
+Prefer not to use plugins, or not in Claude Code? `./install.sh` symlinks the same nine
 skills into `~/.claude/skills`.
 
 ### Then, if you want the content pipeline

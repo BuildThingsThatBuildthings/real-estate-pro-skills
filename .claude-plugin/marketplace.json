@@ -23,7 +23,7 @@
     },
     {
       "name": "real-estate-skills",
-      "description": "All seven skills: brand-locked content production, analytics-driven scheduling, brand voice, client-AI reconciliation, database follow-up, comp-backed pricing briefs, and a standalone Fair Housing compliance gate. Config-driven, no vendor lock-in, nothing publishes on its own.",
+      "description": "Nine skills for researched listing campaigns, neighborhood story films, brand-locked content production, scheduling, brand voice, client-AI reconciliation, follow-up, pricing briefs and compliance. Config-driven; no automatic publishing.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -33,7 +33,9 @@
         "./skills/chatgpt-said",
         "./skills/sphere-signal",
         "./skills/listing-price-brief",
-        "./skills/compliance-gate"
+        "./skills/compliance-gate",
+        "./skills/aia-listing-campaign",
+        "./skills/aia-neighborhood-story"
       ]
     }
   ]

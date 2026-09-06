@@ -82,7 +82,7 @@ PROMISE = [
 # Numbers that need a source.
 NEEDS_SOURCE = [
     (r"\b\d[\d,]*\s*(sq\.?\s?ft|square feet|sqft)\b", "square footage"),
-    (r"\b\d+\s*(bed|bedroom|bath|bathroom)s?\b", "room counts"),
+    (r"(?<![\d.])\b\d+(?:\.\d+)?\s*(bed|bedroom|bath|bathroom)s?\b", "room counts"),
     (r"\b\d+(\.\d+)?%\s", "percentage"),
     (r"\bHOA\b.*\$\d", "HOA fees"),
     (r"\btax(es)?\b.*\$\d", "tax figures"),
