@@ -26,3 +26,7 @@ Run validator tests and a second clearly fictional fixture with different brand,
 ## Available local narration
 
 `local_narration.py` supports an Apache-licensed Kokoro ONNX model with a built-in synthetic voice. Record model/voice source, license, runtime version and file hashes in the private run. Install its runtime in an isolated environment and keep weights outside git. A short successful audition precedes a batch. Scene-level time fitting must stay within the specified speed ceiling; caption timing and pronunciation still need full playback review. Use `final_mix.py` to map only source video and approved sound, excluding all rejected evaluation audio.
+
+## Runtime dependencies
+
+Production is optional and isolated from the lightweight evidence gate. Use Python 3.11 or newer for production scripts, FFmpeg/FFprobe, the existing Remotion engine Node dependencies, Pillow, fonttools with Brotli, qrcode, and ReportLab. Local narration additionally needs kokoro-onnx and its supported ONNX runtime. Record the tested versions in each run; do not install model weights or client media in the skill repository. The evidence validator and its test suite remain dependency-light and run in CI.

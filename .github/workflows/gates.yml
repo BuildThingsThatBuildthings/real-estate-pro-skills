@@ -55,6 +55,9 @@ jobs:
             echo "::endgroup::"
           done
 
+      - name: Listing campaign evidence, rights and review gates
+        run: python3 -m unittest discover -s skills/aia-listing-campaign/tests -v
+
       - name: Doctors
         run: |
           set -e
