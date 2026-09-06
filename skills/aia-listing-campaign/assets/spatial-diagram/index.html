@@ -1,0 +1,40 @@
+<!doctype html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#151615;color:#eee;font-family:Arial,sans-serif}canvas{display:block}#brand{position:absolute;left:38px;bottom:29px;font-size:13px;letter-spacing:1px;line-height:1.7}#brand strong{font-size:17px;letter-spacing:.5px}#note{position:absolute;right:38px;bottom:29px;font-size:12px;color:#bbb;text-align:right;line-height:1.7}#caption{position:absolute;left:42px;top:36px;max-width:400px;font-size:28px;font-weight:600;line-height:1.12;text-shadow:0 2px 12px #0008}#caption small{display:block;margin-bottom:9px;font-size:11px;letter-spacing:3px;font-weight:400;color:#ccc}</style></head><body><div id="brand"></div><div id="note"></div><div id="caption"></div><script type="module">
+import * as T from '/three/three.module.js';
+const c=await(await fetch('/config.json')).json();
+document.querySelector('#brand').innerHTML='<strong>'+c.brand.name+'</strong><br>'+c.brand.brokerage;
+document.querySelector('#note').textContent=c.disclosure;
+const scene=new T.Scene();scene.background=new T.Color('#171918');scene.fog=new T.Fog('#171918',45,90);
+const r=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});r.setSize(c.width,c.height);r.setPixelRatio(1);r.shadowMap.enabled=true;r.shadowMap.type=T.PCFSoftShadowMap;r.toneMapping=T.ACESFilmicToneMapping;r.toneMappingExposure=1.15;document.body.appendChild(r.domElement);
+const camera=new T.PerspectiveCamera(38,c.width/c.height,.1,120);
+scene.add(new T.HemisphereLight(0xf4f0e7,0x454b4a,2.4));
+const key=new T.DirectionalLight(0xffead2,4);key.position.set(-12,24,13);key.castShadow=true;key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-18,right:18,top:18,bottom:-18,near:1,far:65});key.shadow.bias=-.0003;key.shadow.normalBias=.03;scene.add(key);
+const fill=new T.DirectionalLight(0xd8eaff,2.2);fill.position.set(14,12,-15);scene.add(fill);
+const mat=(color,rough=.7)=>new T.MeshStandardMaterial({color,roughness:rough});
+const white=mat('#e9e5dc'),wood=mat('#af8761'),floorMat=mat('#c6a17b'),dark=mat('#343837'),red=mat(c.brand.accent),stone=mat('#f0eae0'),linen=mat('#e5ddcf'),sage=mat('#667760');
+function box(parent,name,x,y,z,w,h,d,m,rot=0){const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),m);mesh.name=name;mesh.position.set(x,y,z);mesh.rotation.y=rot;mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);return mesh}
+function point(p){return [(p[0]-c.origin[0])*c.scale,(p[1]-c.origin[1])*c.scale]}
+const floors=[];
+for(const [i,f] of c.floors.entries()){
+ const g=new T.Group();g.name=f.name;scene.add(g);floors.push(g);
+ const shape=new T.Shape();f.polygon.forEach((p,j)=>{const [x,z]=point(p);j?shape.lineTo(x,-z):shape.moveTo(x,-z)});shape.closePath();const slab=new T.Mesh(new T.ExtrudeGeometry(shape,{depth:.17,bevelEnabled:true,bevelSize:.03,bevelThickness:.02,bevelSegments:2,steps:1}),floorMat);slab.rotation.x=-Math.PI/2;slab.position.y=-.17;slab.castShadow=slab.receiveShadow=true;g.add(slab);
+ for(const [n,w] of f.walls.entries()){const [x1,z1]=point(w.slice(0,2)),[x2,z2]=point(w.slice(2,4)),len=Math.hypot(x2-x1,z2-z1);box(g,'wall '+n,(x1+x2)/2,.68,(z1+z2)/2,len+.035,1.36,.12,white,-Math.atan2(z2-z1,x2-x1));}
+ for(const o of f.furniture||[]){const [x,z]=point(o.at);const w=o.size[0]*c.scale,d=o.size[1]*c.scale;
+ if(o.type==='bed'){box(g,'bed base',x,.22,z,w,.44,d,wood);box(g,'mattress',x,.5,z,w-.06,.2,d-.07,linen);box(g,'headboard',x,.6,z-d/2,w,.95,.11,linen);box(g,'pillow',x-w*.24,.66,z-d*.31,w*.39,.13,d*.18,stone);box(g,'pillow',x+w*.24,.66,z-d*.31,w*.39,.13,d*.18,stone);box(g,'bed throw',x,.63,z+d*.24,w-.04,.045,d*.3,sage);}
+ else if(o.type==='sofa'){box(g,'sofa',x,.31,z,w,.45,d,linen);box(g,'backrest',x,.58,z-d*.4,w,.42,d*.2,linen);for(const side of [-1,1])box(g,'sofa arm',x+side*w*.46,.49,z,w*.09,.4,d,linen);for(let n=0;n<3;n++)box(g,'seat cushion',x-w/3+n*w/3,.55,z+.02,w/3-.05,.1,d*.7,stone);}
+ else if(o.type==='island'){box(g,'island cabinets',x,.46,z,w,.91,d,white);box(g,'countertop',x,.94,z,w+.12,.09,d+.12,stone);for(let n=0;n<3;n++){let sx=x-w*.33+n*w*.33;box(g,'stool legs',sx,.3,z+d*.75,.05,.6,.05,dark);box(g,'stool',sx,.63,z+d*.75,.36,.07,.36,wood);}}
+ else if(o.type==='table'||o.type==='desk'){box(g,o.type,x,.74,z,w,.08,d,wood);for(const a of [-1,1])for(const b of [-1,1])box(g,'table leg',x+a*w*.4,.36,z+b*d*.35,.07,.72,.07,dark);if(o.type==='desk'){box(g,'monitor',x,.99,z-d*.23,.65,.37,.055,dark);box(g,'chair',x,.49,z+d*.75,.5,.09,.5,linen);box(g,'chair back',x,.76,z+d*.9,.5,.5,.08,linen);}}
+ else if(o.type==='cabinet')box(g,'kitchen cabinetry',x,.46,z,w,.92,d,white);
+ else if(o.type==='rug')box(g,'rug',x,.018,z,w,.025,d,sage);
+ else if(o.type==='tv')box(g,'media console',x,.4,z,w,.8,d,dark);
+ }
+}
+// Stairs follow the plan's actual shared opening. They are diagram geometry.
+for(const st of c.stairs||[])for(let n=0;n<st.count;n++)box(floors[st.floor],'stair '+n,...(()=>{const [x,z]=point([st.origin[0]+n*st.planStep[0],st.origin[1]+n*st.planStep[1]]);return [x,.055+n*st.rise,z]})(),st.width,.11,st.tread,white);
+const ground=new T.Mesh(new T.PlaneGeometry(150,150),mat('#202421'));ground.rotation.x=-Math.PI/2;ground.position.y=-.42;ground.receiveShadow=true;scene.add(ground);
+const ease=t=>t*t*(3-2*t);const lerp=(a,b,t)=>a+(b-a)*t;
+const path=c.camera;
+function state(time){let idx=path.findIndex((s,i)=>i<path.length-1&&time>=s.t&&time<path[i+1].t);if(idx<0)idx=path.length-2;const a=path[idx],b=path[idx+1],p=ease(Math.max(0,Math.min(1,(time-a.t)/(b.t-a.t))));camera.position.set(...a.pos.map((v,j)=>lerp(v,b.pos[j],p)));camera.lookAt(...a.target.map((v,j)=>lerp(v,b.target[j],p)));if(floors[1])floors[1].position.y=lerp(a.upper,b.upper,p);const cap=c.captions.find(x=>time>=x.start&&time<x.end);document.querySelector('#caption').innerHTML=cap?'<small>'+cap.eyebrow+'</small>'+cap.text:'';r.render(scene,camera)}
+window.renderFrame=f=>state(f/c.fps);window.ready=true;state(0);
+let origin=null,manual=false;const loop=stamp=>{if(!manual){origin??=stamp;state(((stamp-origin)/1000)%c.duration)}requestAnimationFrame(loop)};if(new URLSearchParams(location.search).has('play'))requestAnimationFrame(loop);
+window.scene=scene;window.inspectTime=state;
+</script></body></html>

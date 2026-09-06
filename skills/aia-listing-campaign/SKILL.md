@@ -7,6 +7,8 @@ description: Produce a researched, brand-specific multi-format real estate listi
 
 Use this extension with `content-foundry`, `brand-voice`, `aia-listing-photos`, and `aia-neighborhood-story`. Private client facts and media belong in the run folder, never this skill. An approved user campaign plan authorizes its production; record that approval in BRIEF.md without repeating the approval request. New purchases or materially expanded scope require a concrete estimate.
 
+For rejected creative, cinematic walkthroughs, or feedback that video feels like slides, first apply [creative recovery](references/creative-recovery.md). Prove the motion and voice direction before multiplying deliverables. Source-led supporting dollhouses follow [spatial diagrams](references/spatial-diagrams.md); they never count as measured scans or finished photographic walkthroughs.
+
 ## Run contract
 
 Create `run.json` with client_slug, brand, approval, sources, claims, media, deliverables, and stages. Each claim has id, text, source_ids, verified_at, status (verified, conflicting, historical, unresolved). Each source has id, url, retrieved_at, and supporting excerpt or artifact. Each medium has id, path/url, source_id, rights (authorized, licensed, original, unresolved), rights_basis, commercial_use, license_evidence, location, and fidelity_review. Each deliverable has id, kind, required, status (planned, rendering, awaiting_footage, failed, review, complete), path, claim_ids, media_ids, and review evidence. Never substitute a storyboard or preview for a required finished film.
