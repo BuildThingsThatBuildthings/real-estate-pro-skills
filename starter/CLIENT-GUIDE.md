@@ -42,3 +42,7 @@ Your setup receipt should distinguish: files installed; skill loaded by the AI; 
 ## Help
 
 Use the help contact shown in your AIA portal or ask in the AI Acceleration Skool community. Describe your AI app, the step that failed and the error without including passwords, tokens or private client information.
+
+## Start with a listing link
+
+Choose your own Zillow, brokerage or other listing link, paste listing text, or use the supplied fictional example. Open skills/aia-listing-machine/references/listing-link-prompt.md and copy it into your AI chat. If the AI cannot read a website, paste the text or attach a brochure, PDF or screenshots. Check the property facts, review the editable draft, and change one fact to practice updating the work. You can do this before installing skills or connecting accounts.

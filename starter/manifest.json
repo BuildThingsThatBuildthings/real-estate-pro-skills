@@ -1,14 +1,15 @@
 {
   "schema": "aia-starter-skills/v1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "authority": {
     "offerId": "ai-acceleration-real-estate-skool",
     "claimIds": [
       "skool-real-estate-tooling",
-      "skool-real-estate-practical-workflows"
+      "skool-real-estate-practical-workflows",
+      "skool-real-estate-own-work-or-example"
     ],
-    "masterVersion": "2026-09-04.1",
-    "masterSha256": "800847965288e71a2c5d7f157ccae05411747352c13ffe4da68305dc056450d4"
+    "masterVersion": "2026-09-07.skool-five-courses-release-1",
+    "masterSha256": "c34e33e2761ef301bd3428a9278eca7c27574aface64373f16f144d3bbfb0bd3"
   },
   "skills": [
     {
@@ -27,7 +28,7 @@
       "name": "aia-listing-machine",
       "title": "Listing Machine",
       "path": "skills/aia-listing-machine",
-      "description": "Turn supplied property facts into reusable listing context and requested launch materials. Use for listing descriptions, launch emails, open-house content or seller updates, not appraisals or unsupported pricing advice."
+      "description": "Turn a listing link, supplied property facts or the fictional example into reusable listing context and editable launch drafts."
     },
     {
       "name": "aia-listing-photos",

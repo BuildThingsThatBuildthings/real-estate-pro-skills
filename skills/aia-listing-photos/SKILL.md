@@ -22,4 +22,4 @@ Use references/photo-review.md for the review checklist. The existing listing-wo
 
 ## Package authority
 
-{"claimIds": ["skool-real-estate-tooling", "skool-real-estate-practical-workflows"], "masterSha256": "800847965288e71a2c5d7f157ccae05411747352c13ffe4da68305dc056450d4", "masterVersion": "2026-09-04.1", "offerId": "ai-acceleration-real-estate-skool"}
+{"offerId": "ai-acceleration-real-estate-skool", "claimIds": ["skool-real-estate-tooling", "skool-real-estate-practical-workflows", "skool-real-estate-own-work-or-example"], "masterVersion": "2026-09-07.skool-five-courses-release-1", "masterSha256": "c34e33e2761ef301bd3428a9278eca7c27574aface64373f16f144d3bbfb0bd3"}
