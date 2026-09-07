@@ -34,8 +34,9 @@ For a multi-format listing launch, use `../aia-listing-campaign/SKILL.md` after 
 2. **Composite, don't request.** The generative model never produces the logo, the exact brand hex,
    the license number, or the disclosure line. Those are placed by `scripts/composite.py` from files
    on disk. Asking a model for them is the failure this product exists to prevent.
-3. **Brief before spend.** Stage 4 writes `BRIEF.md` to disk and stops for review before any
-   generation call. Regeneration is expensive; briefs are cheap.
+3. **Brief before spend.** Stage 4 writes `BRIEF.md` before generation. An explicitly approved
+   campaign plan authorizes production within that scope; record the approval rather than
+   asking again. New purchases or material scope changes still need their own authorization.
 4. **The lint must be able to fail.** `brand_lint.py` is a gate, not a formality. If it has never
    failed on a run, it is not wired correctly.
 5. **This system does not publish.** The client agreement says so in their own folder: "Nothing
@@ -65,11 +66,15 @@ Run before an agent's first production run.
    - `brand-context-compliance.md` — brokerage disclosure, license number + placement, Fair
      Housing language, banned claims
    If the agent drops a brand guide PDF, extract and pre-fill, then confirm every extracted value.
-5. **Dependency check, at setup and never later:** run `python scripts/doctor.py` — it verifies
+5. **Dependency check at setup:** run `python scripts/doctor.py` — it verifies
    Python/Pillow (required), ffmpeg/node (video tier), and Post Bridge (optional) with per-OS
    install hints. Also confirm the logo files at the declared paths actually exist. Anything
    missing is reported now, in plain language; a dependency discovered missing at Stage 6 is a
    defect.
+   For a full listing campaign use `doctor.py --campaign --skip-postbridge` in the exact Python
+   runtime used by the workflow. This also checks the QR, PDF, font and skill-validation libraries.
+   A changed runtime requires another preflight; packages installed in a different interpreter do
+   not establish readiness. The skip flag avoids probing an unneeded publishing dependency.
 6. Verify per `_MANIFEST.md`'s own test: can you state who this agent is, how they sound, and what
    the rules are? If any answer is vague, the files need more work — say so.
 
@@ -132,7 +137,8 @@ Compose `runs/{run}/BRIEF.md`: objective, key message, target channels, brand co
 agent folder), channel constraints (from `channel-specs.md`), assets to feature (by filename),
 research citations, and the composite plan (which hex where, logo placement, disclosure position).
 
-**Write it to disk and stop.** Present it for review. Only continue on approval or edit.
+Write it to disk. If the user has already approved the campaign plan or directed this rebuild,
+record that authorization and continue. Otherwise present the concrete brief for review.
 
 ### Stage 5 — ROUTE
 
@@ -159,10 +165,11 @@ the cap. Faceless throughout: production-only, the agent is never on camera.
 | Cinematic / AI-generated scenes | BYO AI-video tool (optional) | `references/engine-hyperframes.md` |
 | Property tour, spatial 3D content | 3D (post-v1) | `references/engine-3d.md` |
 
-Load only the routed engine's doc. **Graceful degradation:** if a video engine's dependency is
-missing, fall back to a still or carousel from the same brief and offer to walk through the install.
-Never fail a run because an optional engine is absent. The one exception is a missing image API key,
-which setup should already have caught.
+Load only the routed engine's doc. If a requested engine is unavailable, continue independent
+deliverables and keep the affected output explicitly unfinished. Do not replace a required film
+with a still/carousel, count a camera test as a finished film, or stop the whole campaign at one
+provider's access problem. Follow the listing campaign's per-deliverable workflow runner.
+An image API key is unnecessary when authorized source photographs already supply the base.
 
 ### Stage 6 — GENERATE
 Produce **base imagery only** into `runs/{run}/working/`. No logo, no headline type, no disclosure

@@ -3,6 +3,7 @@
 import argparse,json,re
 from pathlib import Path
 import qrcode
+from PIL import Image,ImageOps
 from reportlab.pdfgen import canvas
 from reportlab.lib.colors import HexColor
 from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
@@ -18,9 +19,12 @@ def main():
  c=canvas.Canvas(str(out/(facts['id']+'.pdf')),pagesize=(612,792));c.setTitle(facts['address']+' | '+b['name']);c.setFillColor(HexColor(b['paper']));c.rect(0,0,612,792,fill=1,stroke=0);c.setFillColor(HexColor(b['red']));c.rect(0,782,612,10,fill=1,stroke=0)
  def txt(x,y,s,size=12,bold=False):c.setFillColor(HexColor(b['dark']));c.setFont('Brand700' if bold else 'Brand400',size);c.drawString(x,y,s)
  txt(36,747,b['name'].upper(),11,True);txt(36,714,facts['address'],25,True);txt(36,691,facts['location'],12)
- c.drawImage(ImageReader(r/'assets/photos'/facts['hero']),36,365,width=540,height=306,preserveAspectRatio=True,anchor='c')
+ def photo(name,xy,size,focal=(.5,.5)):
+  image=Image.open(r/'assets/photos'/name).convert('RGB');image=ImageOps.fit(image,(int(size[0]*2),int(size[1]*2)),Image.Resampling.LANCZOS,centering=focal)
+  c.drawImage(ImageReader(image),*xy,width=size[0],height=size[1])
+ photo(facts['hero'],(36,365),(540,306),tuple(facts.get('hero_focal',[.5,.2])))
  txt(36,342,facts['price'],26,True);txt(205,347,facts['summary'],13,True)
- c.drawImage(ImageReader(r/'assets/photos'/facts['detail_photos'][0]),36,205,width=260,height=118,preserveAspectRatio=True,anchor='c');c.drawImage(ImageReader(r/'assets/photos'/facts['detail_photos'][1]),316,205,width=260,height=118,preserveAspectRatio=True,anchor='c')
+ photo(facts['detail_photos'][0],(36,205),(260,118));photo(facts['detail_photos'][1],(316,205),(260,118))
  txt(36,183,facts['hook'],15,True)
  for i,line in enumerate(facts['features']):txt(36,160-i*18,line,10)
  c.drawImage(ImageReader(out/'listing-qr.png'),472,105,width=100,height=100);txt(479,91,'Full listing',10,True)

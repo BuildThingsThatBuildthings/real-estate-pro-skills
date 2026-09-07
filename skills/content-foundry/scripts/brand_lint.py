@@ -87,6 +87,8 @@ def main():
     ap.add_argument("--agent", required=True, help="path to agents/{slug}/")
     ap.add_argument("--manifest", default=None,
                     help="composite manifest (default: <asset>.composite.json)")
+    ap.add_argument("--review-known-requirements", action="store_true",
+                    help="Check known brand requirements for a review draft; missing requirements remain unresolved and exit 3, never PASS")
     args = ap.parse_args()
 
     asset_p = Path(args.asset)
@@ -95,7 +97,7 @@ def main():
         return 1
     man_p = Path(args.manifest) if args.manifest else asset_p.with_suffix(".composite.json")
 
-    fails, warns = [], []
+    fails, warns, unresolved = [], [], []
 
     if not man_p.exists():
         # No manifest = no provenance. An asset that skipped the composite
@@ -192,6 +194,9 @@ def main():
     comp_els = {e["field"]: e for e in by_type.get("compliance", [])}
     for field, val in required.items():
         if val is None:
+            if args.review_known_requirements:
+                unresolved.append(f"compliance '{field}' requires brokerage confirmation")
+                continue
             fails.append(f"compliance '{field}' is unfilled in "
                          f"brand-context-compliance.md — production asset "
                          f"cannot ship")
@@ -273,6 +278,10 @@ def main():
         print(f"\nVERDICT: FAIL ({len(fails)} finding(s)) — route back to "
               f"GENERATE with a root-cause note. Max 2 retries.", file=sys.stderr)
         return 1
+    if unresolved:
+        for issue in unresolved: print('  unresolved: '+issue)
+        print('VERDICT: REVIEW ONLY — known checks passed; not cleared for publication')
+        return 3
     print(f"VERDICT: PASS ({len(warns)} warning(s))")
     return 0
 

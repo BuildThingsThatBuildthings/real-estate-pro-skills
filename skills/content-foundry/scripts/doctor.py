@@ -17,6 +17,8 @@ import platform
 import shutil
 import subprocess
 import sys
+import argparse
+import importlib.util
 from pathlib import Path
 
 OS = platform.system()  # 'Darwin' | 'Linux' | 'Windows'
@@ -61,6 +63,7 @@ def check_cmd(name, args, min_major=None):
 
 
 def main():
+    ap=argparse.ArgumentParser();ap.add_argument('--campaign',action='store_true');ap.add_argument('--skip-postbridge',action='store_true');doctor_options=ap.parse_args()
     results = []  # (tier, name, ok, detail, hint)
 
     ok = sys.version_info >= (3, 10)
@@ -75,6 +78,10 @@ def main():
                         hint("pillow")))
 
     fonts = Path(__file__).resolve().parent.parent / "assets" / "fonts"
+    if doctor_options.campaign:
+        for module,package in [('qrcode','qrcode'),('reportlab','reportlab'),('fontTools','fonttools'),('yaml','PyYAML')]:
+            have=importlib.util.find_spec(module) is not None
+            results.append(('required',module,have,'available' if have else 'missing',f'Install {package} in the selected campaign runtime'))
     have_fonts = (fonts / "PlayfairDisplay.ttf").exists()
     results.append(("required", "bundled fonts", have_fonts,
                     str(fonts) if have_fonts else "missing",
@@ -96,7 +103,9 @@ def main():
                     "ready" if node_modules else "not yet installed",
                     f"cd {engine} && npm install   (first video use only)"))
 
-    if shutil.which("npx"):
+    if doctor_options.skip_postbridge:
+        ok_pb,detail_pb=True,'not needed for production-only campaign; skipped'
+    elif shutil.which("npx"):
         r = subprocess.run(["npx", "-y", "postbridge-cli"],
                            capture_output=True, text=True, timeout=60)
         ok_pb = "post" in (r.stdout + r.stderr).lower()

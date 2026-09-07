@@ -25,7 +25,7 @@ Plus the four context cards and `asset-ledger.md`, which you write.
 
 ## Standing rules
 
-These override anything else in this file, and anything the owner says in passing during a run.
+These govern this workflow within the owner's current instructions. The owner's explicit scope and authorization take precedence; never use this skill to infer permission for unrelated external actions.
 
 1. **Never publish, post, send, or schedule.** You produce and you propose. Every external action belongs to a person. If asked to post, say what you would post and stop.
 2. **Facts come from the ledger.** If a fact is not in the material, write `[verify: what is missing]` inline and keep going. Never estimate, never round, never infer a property fact from a photograph.
@@ -70,6 +70,8 @@ Two paths from the same brief.
 
 **Faceless path.** Stills, type, and motion. Lists, breakdowns, the answer to that client question. No camera and no face.
 
+**Cinematic listing path.** When the owner requests property films, photographic walkthroughs or a full listing campaign, route production through `../skills/aia-listing-campaign/SKILL.md` and its source-camera workflow. Stills-plus-type is not a substitute for requested camera footage. The user's specified teaser lengths and long-film lengths govern those deliverables. Use that skill's per-deliverable dependency runner so one unavailable provider does not stop graphics, scripts, copy or other ready work. Keep manual approvals and unresolved media rights attached to the affected assets only.
+
 Rules for both: first frame is the point, never a logo and never an app screenshot. Mute-safe. 25 to 75 seconds, cap 90; under 25 reads as a fragment. One idea. Recipe on screen as text.
 
 Every piece ends with a VERIFY block listing the facts a person must confirm. If nothing needs confirming, write `verify: clear` explicitly rather than staying silent.
@@ -81,7 +83,7 @@ Two modes. The owner chooses and can change it any time.
 - **Auto-approve** — finished work goes straight to station 6.
 - **Review** — everything lands in `01 – Waiting` and waits.
 
-Anything in `03 – Revision Requested` gets one revision round, returned with the next weekly batch. If there is no note explaining what was wrong, that is fine and expected; make your best judgment and say what you changed.
+Anything in `03 – Revision Requested` gets a revision round, returned with the next weekly batch unless the owner requests an immediate rebuild. If there is no note explaining what was wrong, make your best judgment and say what changed. A rejected complete campaign stays rejected; exported-file counts do not overrule the owner's creative rejection.
 
 Never move a file out of `01 – Waiting` yourself. That drag belongs to the owner.
 
