@@ -19,7 +19,10 @@ def verify(local, remote, folder_id, destination, receipt):
         raise ValueError('Explicit remote, folder ID and destination are required')
     target = remote + destination.strip('/')
     command = ['rclone', 'check', str(local), target,
-               '--drive-root-folder-id', folder_id, '--one-way', '--download']
+               '--drive-root-folder-id', folder_id, '--one-way', '--download',
+               '--contimeout', '15s', '--timeout', '60s', '--retries', '2',
+               '--low-level-retries', '3', '--tpslimit', '2',
+               '--tpslimit-burst', '2', '--checkers', '2']
     result = subprocess.run(command, capture_output=True, text=True)
     files = [{'path': str(p.relative_to(local)), 'bytes': p.stat().st_size,
               'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}

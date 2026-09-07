@@ -193,7 +193,9 @@ def cmd_deliver(a):
            "--drive-root-folder-id", fid, "--stats-one-line",
            "--stats", "15s", "--stats-log-level", "NOTICE",
            "--contimeout", "15s", "--timeout", "60s",
-           "--retries", "2", "--low-level-retries", "3"]
+           "--retries", "2", "--low-level-retries", "3",
+           "--tpslimit", "2", "--tpslimit-burst", "2",
+           "--checkers", "2", "--transfers", "2"]
     # Surface transfer progress and failures. A captured, silent upload can look
     # like abandoned work while a network request waits through long retries.
     r = subprocess.run(cmd, text=True)
