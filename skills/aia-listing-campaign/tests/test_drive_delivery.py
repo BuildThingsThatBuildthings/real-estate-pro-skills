@@ -1,6 +1,7 @@
 import importlib.util
 import json
 import tempfile
+import subprocess
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -12,6 +13,18 @@ spec.loader.exec_module(delivery)
 
 
 class DeliveryChecks(unittest.TestCase):
+    def test_total_deadline_preserves_incomplete_receipt(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td); local = root / 'upload'; local.mkdir()
+            (local / 'clip.mp4').write_bytes(b'fixture')
+            receipt = root / 'receipt.json'
+            with patch.object(delivery.subprocess, 'run', side_effect=subprocess.TimeoutExpired('rclone', 180, stderr=b'DNS unavailable')) as call:
+                self.assertEqual(delivery.verify(local, 'gdrive:', 'parent', 'review', receipt), 124)
+            record = json.loads(receipt.read_text())
+            self.assertFalse(record['downloaded_bytes_match'])
+            self.assertTrue(record['timed_out'])
+            self.assertEqual(call.call_args.kwargs['timeout'], 180)
+
     def test_transfer_failure_cannot_be_reported_as_verified(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td); local = root / 'upload'; local.mkdir()

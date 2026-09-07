@@ -23,20 +23,33 @@ def verify(local, remote, folder_id, destination, receipt):
                '--contimeout', '15s', '--timeout', '60s', '--retries', '2',
                '--low-level-retries', '3', '--tpslimit', '2',
                '--tpslimit-burst', '2', '--checkers', '2']
-    result = subprocess.run(command, capture_output=True, text=True)
+    # DNS and provider backoff can exceed per-request rclone limits. Bound the
+    # entire check so one disconnected service cannot stall the campaign.
+    timed_out = False
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, timeout=180)
+        returncode, check_output = result.returncode, result.stderr
+    except subprocess.TimeoutExpired as error:
+        timed_out = True
+        returncode = 124
+        check_output = error.stderr or ''
+        if isinstance(check_output, bytes):
+            check_output = check_output.decode('utf-8', errors='replace')
+        check_output += '\nTotal verification deadline exceeded (180 seconds). Verification is incomplete.'
     files = [{'path': str(p.relative_to(local)), 'bytes': p.stat().st_size,
               'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
              for p in sorted(local.rglob('*')) if p.is_file()]
     record = {'checked_at': datetime.now(timezone.utc).isoformat(),
               'remote': target, 'parent_folder_id': folder_id,
-              'downloaded_bytes_match': result.returncode == 0,
-              'exit_code': result.returncode, 'files': files,
-              'check_output': result.stderr[-12000:],
+              'downloaded_bytes_match': returncode == 0,
+              'exit_code': returncode, 'timed_out': timed_out, 'files': files,
+              'check_output': check_output[-12000:],
+              'failure_interpretation': 'Missing-file reports are inconclusive when destination listing or connectivity fails; inspect errors before declaring data absent.',
               'playback_review': 'separate; not verified by byte comparison',
               'creative_acceptance': 'separate; not verified by byte comparison'}
     receipt.parent.mkdir(parents=True, exist_ok=True)
     receipt.write_text(json.dumps(record, indent=2) + '\n')
-    return result.returncode
+    return returncode
 
 
 if __name__ == '__main__':
