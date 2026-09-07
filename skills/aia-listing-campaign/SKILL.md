@@ -21,6 +21,7 @@ Create `run.json` with client_slug, brand, approval, sources, claims, media, del
 5. **Agent kit.** Follow [recording and delivery](references/recording-delivery.md). Future recordings are awaiting_footage. Scripts do not count toward finished video totals.
 6. **QA.** Run `python scripts/validate_campaign.py run.json`. Run Content Foundry compliance, brand and slop gates. Fully review every export with audio, then muted; document reviewer, time, issues and fixes. Technical probes and frame samples support but never replace full viewing. Verify actual footage against originals. No assumed or self-certified full-playback pass.
 7. **Delivery.** Use copy/upload, never destructive sync, into the authorized client's listing subfolder under Weekly Context and Waiting. Read back filenames, sizes, hashes where available, downloadable bytes, subtitle pairing, video playback and QR target. Store delivery evidence. Never publish or schedule from this skill.
+   After upload, run `scripts/verify_drive_delivery.py` with the local folder, remote, parent folder ID, destination and a receipt outside the checked folder. It downloads and compares every delivered file; a mismatch or missing file fails. This checks transfer integrity only. Playback, captions, QR destination and creative acceptance remain separate checks.
 
 ## Continue independent production
 
