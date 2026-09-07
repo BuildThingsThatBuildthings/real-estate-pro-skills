@@ -190,10 +190,15 @@ def cmd_deliver(a):
         print("\nthis becomes visible to the client. re-run with --yes to send.")
         return
     cmd = ["rclone", "copy", src, f"{remote}{label}",
-           "--drive-root-folder-id", fid, "--stats-one-line"]
-    r = subprocess.run(cmd, capture_output=True, text=True)
+           "--drive-root-folder-id", fid, "--stats-one-line",
+           "--stats", "15s", "--stats-log-level", "NOTICE",
+           "--contimeout", "15s", "--timeout", "60s",
+           "--retries", "2", "--low-level-retries", "3"]
+    # Surface transfer progress and failures. A captured, silent upload can look
+    # like abandoned work while a network request waits through long retries.
+    r = subprocess.run(cmd, text=True)
     if r.returncode != 0:
-        raise SystemExit("rclone failed:\n" + r.stderr[-800:])
+        raise SystemExit(f"rclone delivery failed (exit {r.returncode}); review transfer output above. Re-running copy resumes without deleting delivered files.")
     print(f"delivered {n} file(s) to 01 Waiting / {label}")
     print("the client moves it to Approved. this bundle never does.")
 
