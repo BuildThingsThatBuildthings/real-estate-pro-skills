@@ -9,3 +9,9 @@ Verify neighborhood identity independently of portal marketing regions. Prefer p
 Collect 3+ short professional writing samples where accessible. Extract sentence length, enthusiasm, punctuation, repeated invitations and preferred words. Label the evidence count and confidence; do not invent a fully validated voice when only one sample exists. Website positioning can supplement but not override the agent's own writing. Avoid imitating personal identity characteristics. Write three coordinated hook components: something visually arresting, a spoken question or observation, and concise screen text that adds meaning instead of duplicating every word.
 
 Each public factual sentence links to claim IDs internally. Imagined rituals must read as invitations ("picture"/"imagine"/"could"), never testimony about residents. No safety, school-quality, demographic fit, guaranteed commute, appreciation or returns claims.
+
+Before photograph-led art direction, use `inspect_photo_sources.py` through the
+AIA runner to create private uncropped source sheets. Author pages of at most18
+originals, each with source path, SHA-256 and label. Inspect actual rooms and
+features before choosing crops. These sheets are intake aids and never enter
+client delivery or count as campaign graphics.

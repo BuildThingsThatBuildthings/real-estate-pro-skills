@@ -1,6 +1,6 @@
 ---
 name: brand-voice
-description: Load a brand's voice pack before writing any public facing copy, so captions, emails and scripts sound like the brand instead of like a default model. Reads voice packs from config/voice/<brand>.md and enforces the shared copy rules. Use before drafting social captions, ad copy, email, landing page copy, or video scripts for a named brand, and whenever a piece of copy needs to be checked against a brand's rules. Triggers on "/brand-voice", "load brand voice", "write in <brand> voice", "check this against the brand rules", or any request to draft brand facing copy.
+description: Load a brand's voice pack before writing any public facing copy, so captions, emails and scripts sound like the brand instead of like a default model. Resolves the explicitly selected client voice pack, or config/voice/brand-slug.md for standalone work, and enforces the shared copy rules. Use before drafting social captions, ad copy, email, landing page copy, or video scripts for a named brand, and whenever a piece of copy needs to be checked against a brand's rules. Triggers on "/brand-voice", "load brand voice", "write in the selected brand voice", "check this against the brand rules", or any request to draft brand facing copy.
 ---
 
 # Brand voice
@@ -9,7 +9,11 @@ Copy written without a voice pack reads like a default model wrote it. This skil
 pack first and audits the draft after. It is a dependency of `post-bridge-schedule`, which
 writes one caption per channel and needs to know which voice each channel speaks in.
 
-## Where packs live
+## Resolve the current client's pack
+
+In a Content Foundry or Content Machine campaign, use the **explicitly selected client context folder** and its manifest load order. Its `brand-voice.md` (including a manifest-declared `brand/brand-voice.md`) is the voice pack. Pass that resolved absolute path to the linter; do not copy a stale global pack over it. The folder name is not permission to search other client folders. Record the selected path and source samples privately with the current run.
+
+For standalone invocations without a selected client folder, the pack convention is:
 
 ```
 config/voice/<brand-slug>.md
@@ -23,11 +27,12 @@ Map channels to voice packs in `config/channels.json` via the `brand` field on e
 
 ## Load order
 
-1. Read `config/voice/<slug>.md` end to end. Do not skim it.
+1. Resolve and read the current client's pack end to end. Never default to AIA, a demo persona, another realtor, or remembered voice facts.
 2. Read `config/voice/_RULES.md` for rules that apply to every brand.
-3. Only then draft.
+3. For a fresh campaign or user-directed rebuild, revisit the client's actual writing sources. Collect three short authored samples where accessible; label the evidence count and limitations when fewer exist. Separate the client's own words from agency-written website copy and previous AI drafts. An earlier generated script is not evidence of the client's voice.
+4. Extract sentence rhythm, contractions, enthusiasm, recurring invitations, and concrete vocabulary. Draft only after this check. Brand refresh does not authorize silently rewriting the source pack.
 
-If a pack is missing, say so and ask for it. Do not invent a voice.
+If a pack is missing, inspect the selected client folder and already authorized sources first. Build a clearly labeled provisional voice brief from attributable writing when available; ask only for evidence that cannot be found there. Do not invent a voice or claim limited evidence fully validates one.
 
 ## What a pack must contain
 
@@ -49,7 +54,7 @@ drift.
 
 `config/voice/_RULES.md` holds rules that outrank any individual pack, because they usually
 come from a correction made after a pack was written. When a pack and the shared rules
-disagree, **the shared rules win and you flag the conflict** so one of the two gets fixed.
+disagree, report the conflict and resolve it against the current user's instructions and selected client's guardrails. A generic rule cannot import another brand's identity, CTA, vocabulary or audience into this client.
 
 ## Per channel voice
 
@@ -68,7 +73,7 @@ sounds on each surface it uses. Typical differences:
 The mechanical half is enforced, not requested:
 
 ```bash
-python3 scripts/voice_lint.py check --pack config/voice/<slug>.md --draft draft.json
+python3 skills/brand-voice/scripts/voice_lint.py check --pack /absolute/selected-client/brand-voice.md --draft /private/working/draft.json
 ```
 
 `draft.json` is `{"captions": {"<channel>": "<text>"}}`. Exit 1 refuses: banned words from
@@ -84,4 +89,4 @@ The other half stays with you, judged against the pack's examples:
 - [ ] one caption per channel, all genuinely different
 - [ ] the call to action matches how this brand asks
 
-State which pack you loaded. It should always be auditable.
+Keep the pack path, evidence, lint input and results in private working records. Review narration, on-screen hooks, captions and recording scripts against the same pack; mechanical lint does not establish that a line sounds like the client. Deliver requested scripts and useful copy in the campaign's documents folder. Do not upload JSON, lint output or technical source markers with public media.

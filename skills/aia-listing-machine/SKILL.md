@@ -11,12 +11,12 @@ Read context.md only from the workspace the member selected; do not search unrel
 
 ## Workflow
 
-1. Read the member’s context and property intake. Build a ledger of verified facts, source references, unknowns, seller constraints and prohibited claims.
+1. Read the member’s explicitly selected current client context and original property intake. Load `../brand-voice/SKILL.md` using that same client folder. Build a private ledger of verified facts, source references, unknowns, seller constraints and prohibited claims. Previous AI copy and old run completion labels are not original sources.
 2. Ask for essential missing facts. Unknown is not zero. Do not infer price, dimensions, renovation dates, school assignments, neighborhood demographics or condition. Keep private seller motivations out of public copy.
-3. Create or reuse listing-context.md. Describe the actual property and campaign goals. Get applicable brokerage/MLS requirements for final publication; do not impose an invented universal word limit.
+3. Create or refresh listing context in private working storage. In a user-directed fresh rebuild, recheck current status, price and other time-sensitive facts against original/current sources; do not inherit prior research or claim approval. Distinguish current listing facts from historical sale records. Use the campaign skill's `references/research-voice.md` for closed-sale, competition and neighborhood research when the requested campaign includes it. Get applicable brokerage/MLS requirements for final publication; do not impose an invented universal word limit.
 4. Produce the requested materials: a listing description, channel-specific launch content, database email, open-house copy or seller update. Preserve the same source facts across every asset. If the user asks for a launch pack without specifying channels, start with a description and launch email, then ask what else they need.
 5. Trace each exact number and factual claim back to the ledger. Clearly separate a recommendation from a fact. Compare phrasing with the member’s voice and flag unresolved review items.
-6. Save the draft assets, property context and source ledger in the selected workspace. Return editable files when available. Human review precedes anything entered into MLS, sent or published.
+6. Save requested human-readable listing copy, emails, captions and recording scripts in the campaign's documents folder, including PDFs when requested. Keep internal ledgers, JSON, intermediate scripts and logs in private working storage outside the Drive handoff. Media folders receive only finished videos and images, with embedded video captions. Human review precedes anything entered into MLS, sent or published.
 
 Use references/practice-listing.md for a safe first exercise. Label the example fictional and keep it out of real campaigns. The separate existing listing-price-brief skill performs comp-backed numerical work when that task is requested and its required source data and scripts are available. Do not improvise a valuation here.
 

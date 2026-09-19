@@ -22,7 +22,9 @@ def normalize(path):
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('manifest');a=ap.parse_args();result=[]
     for job in json.loads(Path(a.manifest).read_text()):
-        path=Path(job['output']).with_suffix('.srt')
+        if not job.get('subtitles'):raise ValueError('Declare an explicit private subtitles path; no media-adjacent SRT sidecars')
+        path=Path(job['subtitles']).resolve()
+        if any(p.name in ('output','delivery','handoff') for p in path.parents):raise ValueError('Subtitles must remain outside client media folders')
         if path.exists():result.append({'id':job['id'],'overlap_tails_trimmed':normalize(path)})
     print(json.dumps(result,indent=2))
 if __name__=='__main__':main()

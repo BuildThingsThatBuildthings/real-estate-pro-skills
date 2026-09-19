@@ -23,8 +23,7 @@ import argparse, json, os, re, subprocess, sys, shutil
 from datetime import date, datetime
 
 _HERE = os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0, os.path.realpath(os.path.join(_HERE, "..", "..", "post-bridge-schedule", "scripts")))
-import config as _cfg  # noqa: E402
+from delivery_gate import validate_delivery
 
 MEDIA_IMAGE = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".tif", ".tiff"}
 MEDIA_VIDEO = {".mp4", ".mov", ".m4v", ".avi", ".webm"}
@@ -33,7 +32,18 @@ AUDIO = {".m4a", ".mp3", ".wav", ".aac"}
 
 
 def clients_cfg():
-    return _cfg.load("clients")
+    # Media delivery must never initialize a posting account configuration.
+    profile = os.environ.get("RE_SKILLS_CONFIG_DIR")
+    directory = os.path.expanduser(profile) if profile else os.path.realpath(os.path.join(_HERE, "..", "..", "..", "config"))
+    path = os.path.join(directory, "clients.json")
+    if not os.path.isfile(path):
+        raise SystemExit(f"missing client Drive configuration: {path}")
+    with open(path, encoding="utf-8") as stream:
+        data = json.load(stream)
+    if not isinstance(data.get("clients"), dict):
+        raise SystemExit("client Drive configuration requires a clients mapping")
+    data["_source"] = path
+    return data
 
 
 def client(slug):
@@ -172,7 +182,11 @@ def cmd_deliver(a):
     fid = cl["drive"].get("waiting_folder_id", "")
     if not fid or fid.startswith("PUT_"):
         raise SystemExit("waiting_folder_id not configured")
-    files = list(walk(src))
+    try:
+        files = validate_delivery(src, getattr(a, 'document_folders', []) or [],
+                                  getattr(a, 'documents', []) or [])
+    except ValueError as error:
+        raise SystemExit(str(error))
     n = len(files)
     if not n:
         raise SystemExit(f"nothing to deliver: {src} has no files")
@@ -310,6 +324,10 @@ if __name__ == "__main__":
     d = sub.add_parser("deliver"); d.add_argument("--client", required=True)
     d.add_argument("--from", dest="src", required=True); d.add_argument("--yes", action="store_true")
     d.add_argument("--as", dest="label", help="folder name inside 01 Waiting; defaults to date + source dir")
+    d.add_argument('--document-folder', dest='document_folders', action='append', default=[],
+                   help='explicit relative folder for useful client documents; repeat as needed')
+    d.add_argument('--document', dest='documents', action='append', default=[],
+                   help='exact useful document path relative to --from; repeat for each deliverable')
     d.set_defaults(fn=cmd_deliver)
     cl_ = sub.add_parser("clear"); cl_.add_argument("--client", required=True)
     cl_.add_argument("--week"); cl_.add_argument("--yes", action="store_true")

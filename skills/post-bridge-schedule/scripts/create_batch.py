@@ -24,45 +24,56 @@ batch.json:
 import json, os, sys, urllib.request, urllib.error
 from datetime import datetime, timezone, timedelta
 from collections import defaultdict
+from zoneinfo import ZoneInfo
 
 API = "https://api.post-bridge.com/v1"
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.realpath(__file__)))
 import config as _cfg
-CHANNELS = dict(_cfg.NAME)
+import pb
+import posting_authority
+CHANNELS = {}  # populated only from explicit destination context
 GBP = _cfg.GBP
 MIN_GAP_MIN = _cfg.MIN_GAP
-def _allowed_ct():
-    """Allowed slots come from the SAME derived ladder the planner uses.
-    Hardcoding here lets lint and planner disagree, which rejects valid slots."""
-    try:
-        import subprocess
-        out = subprocess.run(
-            ["python3", os.path.join(os.path.dirname(os.path.abspath(__file__)), "windows.py"),
-             "ladder", "--json"], capture_output=True, text=True, timeout=120)
-        return set(json.loads(out.stdout)["8"])
-    except Exception:
-        return {"11:15", "15:15", "18:15", "20:15", "12:15", "13:20", "10:15", "09:15"}
+def _allowed_ct(preferred_slots=()):
+    """All analytics-supported slots, plus explicit batch timing preferences.
+    Rungs are count targets, not whitelists. Never substitute guessed slots
+    when analytics loading fails.
+    """
+    import windows
+    allowed = {f"{h:02d}:15" if h != 13 else "13:20"
+               for h in windows.score(windows.rows())}
+    for slot in preferred_slots:
+        parsed = datetime.strptime(slot, "%H:%M")
+        if parsed.strftime("%H:%M") != slot or parsed.hour in _cfg.FORBIDDEN_HOURS:
+            raise ValueError("Invalid or forbidden preferred slot: " + slot)
+        allowed.add(slot)
+    return allowed
 
 
-ALLOWED_CT = _allowed_ct()
+ALLOWED_CT = None  # import is offline; derive only during an explicit lint/create run
 
 
 def key():
-    return json.load(open(os.path.expanduser("~/.config/post-bridge/config.json")))["apiKey"]
+    return pb.api_key()
 
 
 def api(path, method="GET", body=None):
-    req = urllib.request.Request(
-        f"{API}{path}", method=method,
-        headers={"Authorization": f"Bearer {key()}", "Content-Type": "application/json"},
-        data=json.dumps(body).encode() if body else None)
-    with urllib.request.urlopen(req) as r:
-        return json.load(r)
+    return pb.req(path, method, body)
+
+
+def scoped_channels():
+    data = posting_authority.context(required=True)
+    ids = data.get('destination', {}).get('account_ids', [])
+    if not ids:
+        raise posting_authority.PostingAuthorityError('Verified client account roster required')
+    return {int(value): _cfg.NAME.get(int(value), str(value)) for value in ids}
 
 
 def live_times():
     """channel -> [datetime UTC] for every scheduled post."""
+    global CHANNELS
+    CHANNELS = scoped_channels()
     per, off = defaultdict(list), 0
     while True:
         page = api(f"/posts?status=scheduled&limit=100&offset={off}")
@@ -81,11 +92,15 @@ def live_times():
 
 def ct_hhmm(utc_iso):
     t = datetime.fromisoformat(utc_iso.replace("Z", "+00:00"))
-    off = -5 if 3 <= t.month <= 11 else -6
-    return (t + timedelta(hours=off)).strftime("%H:%M")
+    if t.tzinfo is None:
+        raise ValueError("scheduled_at must include a UTC offset")
+    return t.astimezone(ZoneInfo("America/Chicago")).strftime("%H:%M")
 
 
 def lint(batch, per_ch):
+    global ALLOWED_CT, CHANNELS
+    CHANNELS = scoped_channels()
+    ALLOWED_CT = _allowed_ct(batch.get("preferred_slots", ()))
     errs = []
     pending = defaultdict(list)
     for p in batch["posts"]:
@@ -94,7 +109,7 @@ def lint(batch, per_ch):
 
         # 1 nine destinations
         if set(caps) != set(CHANNELS):
-            errs.append(f"{s}: destinations != 9 (missing {set(CHANNELS)-set(caps)})")
+            errs.append(f"{s}: destinations differ from verified client roster (missing {set(CHANNELS)-set(caps)})")
         # 2 no duplicate account ids  (dict keys are unique; guard the raw list)
         raw = list(p["captions"].keys())
         if len(raw) != len(set(raw)):
@@ -177,6 +192,8 @@ def check_do_not_schedule(batch):
     return blocked
 
 def build(p):
+    global CHANNELS
+    CHANNELS = scoped_channels()
     caps = {int(k): v for k, v in p["captions"].items()}
     cfg = [{"account_id": a,
             "caption": caps[a],
@@ -210,6 +227,7 @@ def build(p):
 
 if __name__ == "__main__":
     mode, path = sys.argv[1], sys.argv[2]
+    CHANNELS = scoped_channels()
     batch = json.load(open(path))
     per_ch = live_times()
     held = check_do_not_schedule(batch)
@@ -220,8 +238,8 @@ if __name__ == "__main__":
         for e in errs:
             print("  -", e)
         sys.exit(1)
-    print(f"LINT PASSED: {len(batch['posts'])} posts, 9 destinations each, "
-          f"{len(batch['posts'])*9} content units")
+    print(f"LINT PASSED: {len(batch['posts'])} posts, {len(CHANNELS)} verified destinations each, "
+          f"{len(batch['posts'])*len(CHANNELS)} content units")
     if mode == "lint":
         sys.exit(0)
     created = []
@@ -244,7 +262,7 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"  {pid[:8]} {p['slug']}: READ FAILED {e}")
             bad.append((pid, p)); continue
-        if len(q["social_accounts"]) != 9 or len(set(q["social_accounts"])) != 9:
+        if len(q["social_accounts"]) != len(CHANNELS) or len(set(q["social_accounts"])) != len(CHANNELS):
             print(f"  {pid[:8]} {p['slug']}: dest={len(q['social_accounts'])} REPAIRING")
             bad.append((pid, p))
     for pid, p in list(bad):
@@ -259,12 +277,12 @@ if __name__ == "__main__":
                 pass
             _t.sleep(2)
             q = api(f"/posts/{pid}")
-            if len(q["social_accounts"]) == 9 == len(set(q["social_accounts"])):
+            if len(q["social_accounts"]) == len(CHANNELS) == len(set(q["social_accounts"])):
                 print(f"  {pid[:8]} repaired on attempt {attempt}")
                 bad.remove((pid, p)); fixed = True; break
         if not fixed:
             print(f"  {pid[:8]} {p['slug']}: STILL BROKEN, delete and recreate manually")
     ok = len(created) - len(bad)
-    print(f"\nVERIFIED {ok}/{len(created)} records with 9 unique destinations")
+    print(f"\nVERIFIED {ok}/{len(created)} records with {len(CHANNELS)} unique destinations")
     if bad:
         sys.exit(2)

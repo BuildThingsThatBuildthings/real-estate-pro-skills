@@ -43,7 +43,10 @@ For a multi-format listing launch, use `../aia-listing-campaign/SKILL.md` after 
    in this system posts anything, ever." Finished work is delivered to `01 – Waiting` and the
    client approves it. Publishing is a separate paid product. Only when a client has
    `posting_enabled: true` in `config/clients.json` does anything reach `post-bridge-schedule`,
-   and then still draft-first.
+   and only after explicit user posting authorization plus a verified client destination context.
+   An upload or draft is also an external write. Never use Ryan's personal Post Bridge workspace
+   for client output unless he explicitly requests that specific personal sample. Missing client
+   credentials stop posting; they never trigger a fallback to global/personal credentials.
 6. **A listing job runs under the listing's presenting agent's folder.** No folder → run
    `setup --from-research {urls}` (see `references/prospect-research.md`) or a live setup first.
    Never default to a demo persona or a previously-used agent; demo folders refuse listing
@@ -146,33 +149,48 @@ Route on what the dump actually contains, established in Stage 1:
 
 | What came in | What it becomes |
 |---|---|
-| Property photos or walkthrough video, rights clear | listing-led set: hero stills, a faceless walkthrough cut, detail cards |
+| Property photos or walkthrough video, rights clear | For a requested full campaign, the mandatory Listing Campaign route below; otherwise the explicitly requested listing media |
 | B-roll with no specific property | list posts, process explainers, misconception corrections, market notes |
 | A client question in the notes | answer it precisely. The README calls this the most valuable input there is |
 | MLS sheet or market report | sourced market post. Every number cites Stage 3 or the sheet itself |
 | Rights unclear on any asset | it does not get made. Unclear rights are missing, not pending |
 
-Hit the weekly floor from `config/clients.json` (`photos_floor`, `videos_floor`) and never exceed
-the cap. Faceless throughout: production-only, the agent is never on camera.
+For routine weekly jobs, respect the configured floor and cap. An explicit full-campaign request
+uses its complete required deliverable inventory instead; it cannot be reduced to a weekly quota.
+Use authorized agent recordings when supplied and requested. Never invent the agent's appearance
+or impersonate their voice. Future recording requirements remain clearly awaiting real footage.
 
 | Output need | Engine | Reference |
 |---|---|---|
 | Static graphic, carousel, quote card | Still-image engine | `references/engine-stills.md` |
-| Digital walkthrough / sales brief / teaser video | Remotion (3 comps) | `references/engine-remotion.md` |
+| Full listing campaign, flagship house tour, or cinematic listing teaser | Required AIA editor workflow: original-photo or original-footage compositions, narration and a complete story | `../aia-listing-campaign/references/source-camera-workflow.md` and `../aia-listing-campaign/references/motion-edit.md` |
+| Text-led explainer or sales brief that does not promise a photographic property tour | Existing Remotion compositions | `references/engine-remotion.md` |
 | Interactive scroll-tour listing microsite | scroll-world engine | `references/engine-scroll-tour.md` |
 | Outreach spec sample — full suite + live page | canonical workflow | `references/engine-outreach.md` |
 | Outreach landing page component | `engines/outreach/build_page.py` | `references/engine-outreach.md` |
-| Cinematic / AI-generated scenes | BYO AI-video tool (optional) | `references/engine-hyperframes.md` |
-| Property tour, spatial 3D content | 3D (post-v1) | `references/engine-3d.md` |
+| Photographic camera movement from listing stills | Bundled FFmpeg/Pillow editing with source-preserving framing; no invented 3D geometry | `../aia-listing-campaign/references/source-camera-workflow.md` |
+| Supporting spatial diagram from verified source geometry | AIA spatial-diagram workflow; a diagram is never a finished photographic house tour | `../aia-listing-campaign/references/spatial-diagrams.md` |
 
+For a full campaign, the first video route above overrides legacy slideshow/Remotion templates,
+optional BYO-video guidance, and post-v1 3D labels in older references. Complete original-source coverage,
+the full narrated flagship and all required independent edits are current mandatory outputs.
+When the user chooses the basic-editor route, use original photographs with controlled motion,
+varied shot timing, narration and a coherent full-home story. Do not describe these edits as a
+measured 3D scan or generated camera footage. Reject repeated title cards and padded still holds.
+Read the Listing Campaign skill and its referenced production instructions before execution.
 Load only the routed engine's doc. If a requested engine is unavailable, continue independent
 deliverables and keep the affected output explicitly unfinished. Do not replace a required film
 with a still/carousel, count a camera test as a finished film, or stop the whole campaign at one
-provider's access problem. Follow the listing campaign's per-deliverable workflow runner.
+missing bundled capability. Do not impose new purchases, provider sign-ins, subscriptions or optional paid tools on the full campaign. Follow the listing campaign's per-deliverable workflow runner. Inspect the actual edit for engaging pacing, readable images and a coherent property story; software availability alone is not quality evidence.
 An image API key is unnecessary when authorized source photographs already supply the base.
 
 ### Stage 6 — GENERATE
-Produce **base imagery only** into `runs/{run}/working/`. No logo, no headline type, no disclosure
+For full listing campaigns, execute the AIA campaign workflow: source preparation, verified camera
+footage, narration, soundtrack, independent edits and graphics. Do not apply the still-image-only
+instruction below to film production. Keep intermediate files private; only final client deliverables
+reach the output handoff.
+
+For static-image jobs, produce **base imagery only** into `runs/{run}/working/`. No logo, no headline type, no disclosure
 in the generated pixels. Steer the prompt toward the brand palette so the composite doesn't fight
 the base, but never rely on that steering for correctness.
 
@@ -211,18 +229,35 @@ failing asset; never loop silently.
 `python scripts/export.py runs/{run} --channels ig,fb,li`
 
 Sizes/encodes per channel, applies `[AGENT]_[TYPE]_[descriptor]_[YYYY-MM-DD]`, writes to `output/`
-with a summary manifest. Report what was produced, where it is, and the run's cost-per-asset.
+containing only finished client files. Export receipts stay in the private `working/export-receipts/`
+folder, never `output/` or Drive. Photo-design composite manifests live privately in
+`working/design-receipts/`; pass their explicit path with `--manifest` to both `brand_lint.py`
+and `export.py`. Report actual delivery links in the conversation.
 
 ### Stage 10 — DELIVER
 `python scripts/drive_sync.py deliver --client {slug} --from output/ --yes`
 
-Uploads the finished set to `01 – Waiting` with a short summary of what it is and why. The client
-then approves, requests revision, or ignores. Nothing expires and nothing publishes on its own.
+Uploads the finished set to `01 – Waiting`. Media folders contain only playable `.mp4` and decoded
+`.png`/`.jpg`/`.jpeg` images. Useful PDFs, the six recording scripts, captions/copy and the calendar
+remain client deliverables, but only in a separate, explicitly named document folder. Pass both
+`--document-folder "04 Chelsea Recording Kit"` and an exact `--document "04 Chelsea Recording Kit/Recording guide.pdf"`
+for each useful document (repeat flags as needed). `.pdf`, `.md` and `.txt` documents are supported.
+The preflight rejects the entire batch before upload if any technical JSON, logs, subtitle sidecars,
+audio stems, project/source files, hidden files, unfinished renders or unknown files occur anywhere.
+Misleading file extensions fail actual image/video/PDF validation. Never relabel a media folder as
+a document folder or rename technical records as useful documents. Embed captions in finished videos;
+keep timing files, claim/source ledgers and production metadata private. Do not upload a raw run,
+context or project directory into Weekly Context or any other client Drive folder. The client
+approves or requests revision. This stage writes only to the authorized client Drive folder.
+It never uploads media to Post Bridge or creates a draft as a preview. Nothing publishes on its own.
 
 Without `--yes` it prints what it would send and stops. The folder is client-visible.
 
 ### Stage 11 — SCHEDULE (only if posting was purchased)
-Only when `posting_enabled: true` for that client **and** the work sits in `02 – Approved`. Hand
+Only when `posting_enabled: true`, the work sits in `02 – Approved`, **and the user explicitly
+authorizes posting to that client's verified Post Bridge workspace**. Require the private posting
+authority context and live roster verification described in that skill. Client media generation
+is not authority for personal-workspace samples. A media-only campaign stops after Drive delivery. Hand
 to the `post-bridge-schedule` skill, which owns per-channel captions, analytics-derived windows,
 collision detection and verified writes. Approved is not published; scheduling is a separate,
 explicit step.

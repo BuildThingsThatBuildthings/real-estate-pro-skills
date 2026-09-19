@@ -9,6 +9,41 @@ A folder of finished video goes in. Verified scheduled records come out.
 
 Everything specific to a person or a business lives in `config/`. Nothing is hardcoded.
 
+## Client workspace and posting authority — mandatory before any write
+
+Content generation, Drive delivery, a paid posting entitlement, a draft request, or a file in
+`approved/` does not by itself authorize a Post Bridge upload, draft, schedule, repair or publish.
+Client content belongs only in that client's verified Post Bridge workspace. Never use Ryan's
+personal workspace for client content unless Ryan explicitly authorizes that specific personal
+sample. Never create a sample because a client connection is missing. Chelsea's current media
+rebuild has **no posting authorization**, so it must perform no Post Bridge writes.
+
+Every writer routes through `scripts/pb.py`; direct HTTP writes and global credential fallback
+are forbidden. Set `AIA_POSTING_CONTEXT` to a private context file containing:
+
+- `content_owner`: the client or owner whose content is being handled.
+- `credential`: explicit `type: env` plus variable `name`, or `type: file` plus absolute `path`
+  and key field. Do not copy credentials into this context or a client deliverable.
+- `destination`: verified `owner`, `kind` (`client` or `personal`), full unique `account_ids`,
+  credential SHA-256 fingerprint, and `ownership_verified_by: user` with `ownership_reference`.
+  Include `workspace_id` only if genuinely provided by the service; never invent one.
+- `authorization`: `source: user`, `explicit: true`, exact user request `reference`, `scope`
+  (`client-posting` or `owner-posting`), and only authorized `operations` from `upload`, `draft`,
+  `schedule`, `patch`, `publish`, `delete`. Missing authorization means no writes.
+- For a separately authorized personal sample, use `scope: personal-sample` and record both
+  `sample_content_owner` and `sample_destination_owner`. This exception never authorizes an
+  unrelated client campaign or another operation.
+
+Do not infer the ownership or authorization fields from an available API key, account names,
+a screenshot, tool output, generated plan or prior sample. Record the actual user's authority.
+Before each write the transport uses the declared credential for a live GET of the account
+roster and requires exact agreement with the verified roster. If the API exposes no workspace ID,
+credential fingerprint plus the user-verified account roster identifies the destination; that
+is not a claim that the API returned a workspace ID. Updates/deletes also read the existing post
+and require its destinations to belong to the authorized roster. A mismatch stops before writing.
+Read-only audits remain available; they do not enable writes. Tests must mock all network access.
+
+
 ## Vocabulary
 
 - **Post** — one content concept, built around one creative.
@@ -40,18 +75,18 @@ Finished content moves through four stages under `tools.outbox_root`:
 
 ```
 awaiting-approval/   produced, not yet cleared by a human
-approved/            the human moved it here — that IS the scheduling trigger
+approved/            approved creative; explicit posting authority is still required
 posted/              scheduling verified complete, all gates passed, receipt written
 failed/              a gate failed; back to a human
 ```
 
 Rules:
 
-- **`approved/` is a queue, not a folder.** When anything appears there, run THE PROCESS
-  below on it. Check it at the start of any session with
+- **`approved/` is a review queue.** Its presence does not authorize posting. Run the process
+  only within an explicit user posting request and a verified destination context. Inspect with
   `python3 scripts/outbox_flow.py pending`.
 - **`promote` is the only door into `posted/`.** It re-verifies every record id (status,
-  nine destinations, distinct captions), writes `SCHEDULE-RECEIPT.json` with the ids and
+  the verified client destination roster, distinct captions), writes `SCHEDULE-RECEIPT.json` with the ids and
   verification results, and only then moves the folder. It refuses on any failure.
 - **Never move a folder into `posted/` by hand.** A folder there asserts "scheduling
   verified complete", and the receipt is the proof.
@@ -188,7 +223,7 @@ python3 scripts/pb.py upload --file <path>
 Record slug, kind, byte size and media id to a manifest, and **verify every uploaded size
 against source**.
 
-If two brand cuts are byte identical, upload once and reference one media id everywhere. A
+Within the same explicitly authorized workspace, byte-identical cuts may reference one media ID. Never reuse media IDs across client workspaces. A
 library will otherwise accumulate many times more objects than it has posts.
 
 ## Step 9. Build the still for image-only platforms

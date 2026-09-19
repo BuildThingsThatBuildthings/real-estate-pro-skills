@@ -17,6 +17,7 @@ API = "https://api.post-bridge.com/v1"
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.realpath(__file__)))
 import config as _cfg
+import pb
 CHANNELS = dict(_cfg.NAME)
 N_CH = len(CHANNELS)
 RUNGS = list(_cfg.RUNGS)
@@ -37,7 +38,7 @@ def _derived_slots():
                 8: ["11:15", "15:15", "18:15", "20:15", "12:15", "13:20", "10:15", "09:15"]}
 
 
-SLOTS = _derived_slots()
+SLOTS = {}  # derive only in an explicit CLI run, never while importing
 FORBIDDEN_HOURS = set(_cfg.FORBIDDEN_HOURS)
 MIN_GAP_MIN = _cfg.MIN_GAP
 BLOCK = _cfg.BLOCK_DAYS
@@ -49,10 +50,7 @@ def ct_offset(d):
 
 
 def api(path):
-    key = json.load(open(os.path.expanduser("~/.config/post-bridge/config.json")))["apiKey"]
-    req = urllib.request.Request(f"{API}{path}", headers={"Authorization": f"Bearer {key}"})
-    with urllib.request.urlopen(req) as r:
-        return json.load(r)
+    return pb.req(path)
 
 
 def live_posts():
@@ -134,7 +132,7 @@ def cmd_collisions(args):
         print(f"records with duplicate destinations: {len(dupes)} -> {dupes[:5]}")
 
 
-LADDER = SLOTS[8]
+LADDER = []  # populated with SLOTS during an explicit CLI run
 
 
 def free_slot(per_ch, day, slot_list, pending):
@@ -197,6 +195,8 @@ def cmd_plan(args):
 
 
 if __name__ == "__main__":
+    SLOTS = _derived_slots()
+    LADDER = SLOTS[8]
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("status").set_defaults(fn=cmd_status)

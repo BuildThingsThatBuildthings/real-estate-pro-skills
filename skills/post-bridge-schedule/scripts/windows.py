@@ -13,12 +13,14 @@ view-reliable set (yt/tt/fb) and Instagram contributes via likes.
 """
 import json, os, sys, argparse, statistics as st, urllib.request
 from collections import defaultdict
+from zoneinfo import ZoneInfo
 from datetime import datetime, timedelta, timezone
 
 API = "https://api.post-bridge.com/v1"
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.realpath(__file__)))
 import config as _cfg
+import pb
 VIEW_RELIABLE = set(_cfg.VIEW_RELIABLE)
 MIN_N = _cfg.MIN_RECORDS_PER_HOUR   # ignore hours with too little evidence
 RUNG_SIZES = {r: r for r in _cfg.RUNGS}
@@ -26,14 +28,11 @@ FORBIDDEN = set(_cfg.FORBIDDEN_HOURS)   # never schedule overnight
 
 
 def ct(d):
-    return timezone(timedelta(hours=-5 if 3 <= d.month <= 11 else -6))
+    return ZoneInfo("America/Chicago")
 
 
 def api(p):
-    k = json.load(open(os.path.expanduser("~/.config/post-bridge/config.json")))["apiKey"]
-    r = urllib.request.Request(f"{API}{p}", headers={"Authorization": f"Bearer {k}"})
-    with urllib.request.urlopen(r) as resp:
-        return json.load(resp)
+    return pb.req(p)
 
 
 def rows():

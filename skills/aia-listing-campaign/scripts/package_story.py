@@ -6,7 +6,9 @@ from pathlib import Path
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument('run'); a=ap.parse_args(); root=Path(a.run)
     spec=json.loads((root/'context/story-package.json').read_text())
-    out=root/spec['output']; out.mkdir(parents=True,exist_ok=True)
+    out=(root/spec['output']).resolve()
+    if not out.is_relative_to((root/'working').resolve()):raise ValueError('Story production records belong only in private working storage')
+    out.mkdir(parents=True,exist_ok=True)
     (out/'Narrative treatment.md').write_text(spec['treatment'])
     (out/'Sound plan.md').write_text(spec['sound_plan'])
     boards=[]

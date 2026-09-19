@@ -34,7 +34,7 @@ class DeliveryChecks(unittest.TestCase):
                 self.assertEqual(delivery.verify(local, 'gdrive:', 'parent', 'review', receipt), 1)
             self.assertFalse(json.loads(receipt.read_text())['downloaded_bytes_match'])
             self.assertIn('--download', call.call_args.args[0])
-            self.assertIn('--one-way', call.call_args.args[0])
+            self.assertNotIn('--one-way', call.call_args.args[0])
 
     def test_receipt_cannot_change_checked_directory(self):
         with tempfile.TemporaryDirectory() as td:

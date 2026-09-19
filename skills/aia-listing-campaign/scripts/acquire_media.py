@@ -10,7 +10,8 @@ def main():
         if m.get('rights') not in ('authorized','licensed','original') or not m.get('rights_basis'): raise ValueError('Rights missing: '+m['id'])
         dest=out/m['filename']
         if not dest.exists():
-            with urllib.request.urlopen(m['url'],timeout=45) as response: data=response.read()
+            request=urllib.request.Request(m['url'],headers={'User-Agent':'Mozilla/5.0 (compatible; AIA-MediaAcquisition/1.0)','Accept':'*/*'})
+            with urllib.request.urlopen(request,timeout=45) as response: data=response.read()
             dest.write_bytes(data)
         data=dest.read_bytes();m.update(path=str(dest),bytes=len(data),sha256=hashlib.sha256(data).hexdigest());return m
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool: results=list(pool.map(fetch,items))

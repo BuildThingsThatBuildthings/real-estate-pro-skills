@@ -19,6 +19,7 @@ API = "https://api.post-bridge.com/v1"
 _HERE = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, _HERE)
 import config as _cfg  # noqa: E402
+import posting_authority as _authority
 
 MIME = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
         ".gif": "image/gif", ".webp": "image/webp", ".mp4": "video/mp4",
@@ -27,6 +28,10 @@ MIME = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
 
 
 def api_key():
+    scoped = _authority.context()
+    if scoped is not None:
+        return _authority.credential(scoped)
+    # Legacy credentials are available for read-only audits only. req rejects writes first.
     env = os.environ.get("POST_BRIDGE_API_KEY")
     if env:
         return env
@@ -39,14 +44,28 @@ def api_key():
     return json.load(open(p))["apiKey"]
 
 
-def req(path, method="GET", body=None, base=API):
-    r = urllib.request.Request(
+def _request(path, method, body, key, base=API):
+    request = urllib.request.Request(
         f"{base}{path}", method=method,
-        headers={"Authorization": f"Bearer {api_key()}", "Content-Type": "application/json"},
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
         data=json.dumps(body).encode() if body is not None else None)
-    with urllib.request.urlopen(r) as resp:
-        raw = resp.read()
+    with urllib.request.urlopen(request) as response:
+        raw = response.read()
         return json.loads(raw) if raw else {}
+
+
+def req(path, method="GET", body=None, base=API):
+    method = method.upper()
+    if method not in ('GET', 'HEAD', 'OPTIONS'):
+        if base != API or not path.startswith('/') or '?' in path:
+            raise _authority.PostingAuthorityError('Posting writes require the fixed Post Bridge API endpoint')
+        scoped = _authority.context(required=True)
+        key = _authority.credential(scoped)
+        _authority.authorize(scoped, path, method, body,
+                             lambda target: _request(target, 'GET', None, key))
+    else:
+        key = api_key()
+    return _request(path, method, body, key, base)
 
 
 def paged(path):

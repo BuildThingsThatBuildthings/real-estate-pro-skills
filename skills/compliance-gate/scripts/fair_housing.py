@@ -79,6 +79,45 @@ PROMISE = [
     (r"\bclos(e|ing) in \d+ days\b", "no timeline promises"),
     (r"\bworth \$?\d[\d,]*\b", "no valuation claims without a sourced appraisal"),
 ]
+# --- context helpers -------------------------------------------------------
+# A claim is judged inside its own sentence, not across the whole caption.
+_SENT_SPLIT = re.compile(r"[.!?\n]")
+# First person, plus the third-person self-reference a Google Business Profile
+# caption is written in ("In Ryan's own business..."). Both are the speaker
+# reporting their own operation rather than asserting a fact about the world.
+_FIRST_PERSON = re.compile(
+    r"\b(i|i'm|i've|my|me|mine|we|our|us)\b"
+    r"|\b(?:\w+'s|his|her|their)\s+own\b"
+    r"|\b(?:he|she|they)\s+(?:gets?|sees?|runs?|saw|found)\b")
+# "before you promise", "instead of a promise", "never guarantee" are warnings
+# against the thing, not the thing. Flagging them taught writers to avoid
+# naming the risk at all, which is the opposite of what the rule is for.
+_PROMISE_NEGATED = re.compile(
+    r"\b(before|instead of|rather than|without|never|not|dont|don't|do not|"
+    r"avoid|stop|cannot|can't|no)\b[^.!?]{0,40}$")
+
+
+# A sentence that opens by pointing back at the previous one ("Others run at
+# 80%") inherits that sentence's attribution. A sentence with its own subject
+# ("62% of agents never respond") does not — otherwise any first-person aside
+# would launder every world-claim after it.
+_BACKREF = re.compile(r"^\W*(others?|the others|a few|some|the rest|another|rest)\b")
+
+
+def _sentence_around(text, idx):
+    """The sentence holding idx, extended back only across back-references."""
+    bounds = [0] + [m.end() for m in _SENT_SPLIT.finditer(text, 0, idx)]
+    end_m = _SENT_SPLIT.search(text, idx)
+    end = end_m.start() if end_m else len(text)
+    start = bounds[-1]
+    # Walk backwards while each sentence we are standing on points back.
+    i = len(bounds) - 1
+    while i > 0 and _BACKREF.match(text[bounds[i]:end]):
+        i -= 1
+        start = bounds[i]
+    return text[start:end]
+
+
 # Numbers that need a source.
 NEEDS_SOURCE = [
     (r"\b\d[\d,]*\s*(sq\.?\s?ft|square feet|sqft)\b", "square footage"),
@@ -150,7 +189,7 @@ def check(text, extra_banned=(), strict_source=True, profile=None):
             out.append(("BANNED", phrase, "from the client GUARDRAILS card"))
     for pat, why in PROMISE:
         m = re.search(pat, low)
-        if m:
+        if m and not _PROMISE_NEGATED.search(low[:m.start()]):
             out.append(("PROMISE", m.group(0), why))
     if strict_source:
         for pat, what in NEEDS_SOURCE:
@@ -158,10 +197,13 @@ def check(text, extra_banned=(), strict_source=True, profile=None):
             # First-person experiential attribution counts as sourcing: "in my
             # business, ten answers cover 80%" is the speaker's own record, not
             # a world-claim. Unattributed second-person figures still fail.
-            experiential = any(tok in low for tok in (
-                "in my business", "in my experience", "in my own", "my own business",
-                "i get asked", "he gets asked", "she gets asked",
-                "i've seen", "i have seen"))
+            # Scope the check to the sentence the number sits in. A figure the
+            # speaker reports about their own operation ("some of my processes
+            # run at 80%") is an experiential claim; the same figure asserted
+            # about the world needs a source. Checking the whole caption made
+            # one first-person sentence excuse every other number in the post.
+            sent = _sentence_around(low, m.start()) if m else ""
+            experiential = bool(m) and bool(_FIRST_PERSON.search(sent))
             if m and not experiential and "verify" not in low and "source" not in low and "per " not in low:
                 out.append(("NEEDS_SOURCE", m.group(0), f"{what} needs a source, a VERIFY marker, or first-person attribution"))
     return out

@@ -79,7 +79,7 @@ def main():
 
     fonts = Path(__file__).resolve().parent.parent / "assets" / "fonts"
     if doctor_options.campaign:
-        for module,package in [('qrcode','qrcode'),('reportlab','reportlab'),('fontTools','fonttools'),('yaml','PyYAML')]:
+        for module,package in [('qrcode','qrcode'),('reportlab','reportlab'),('fontTools','fonttools[woff]'),('brotli','Brotli'),('yaml','PyYAML'),('pypdf','pypdf')]:
             have=importlib.util.find_spec(module) is not None
             results.append(('required',module,have,'available' if have else 'missing',f'Install {package} in the selected campaign runtime'))
     have_fonts = (fonts / "PlayfairDisplay.ttf").exists()
@@ -94,6 +94,8 @@ def main():
         ("video", "npm", ["npm", "--version"], None),
     ):
         ok, detail = check_cmd(name, args, mm)
+        if doctor_options.campaign and name in ('ffmpeg', 'ffprobe'):
+            tier = 'required'
         results.append((tier, name, ok, detail,
                         hint(args[0]) if not ok else ""))
 

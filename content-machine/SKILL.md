@@ -35,6 +35,10 @@ These govern this workflow within the owner's current instructions. The owner's 
 6. **Fix the card, not the prompt.** When the owner corrects you, update the relevant context card and say which one you changed.
 7. **Never pretend a save happened.** Save artifacts into Drive through the connector. If a write genuinely fails, say so and hand the artifact over as a copy-paste block with its exact destination folder and filename.
 
+8. **User-requested reset is executable, not a promise.** Explicit instructions to delete and rebuild override preservation of rejected generated work. Inventory exact output IDs and local generated artifacts, preserve supplied originals, run `../skills/aia-listing-campaign/scripts/reset_campaign.py`, and verify removal before a fresh campaign. Its private plan records the existing user authorization; do not ask again. A failed or incomplete listing is not an empty folder. Reset only the authorized scope; keep the four framework folders. Use recoverable Trash. Do not retain a generated take because it seems good. Never silently reuse prior generated footage, copy, graphics or reviews after a full reset.
+
+9. **Useful deliverables only.** Media folders contain finished videos and images. The requested PDFs, agent recording scripts, campaign copy and posting plan belong in their own document folder. JSON, logs, technical receipts, raw timelines, loose SRT/VTT and source code never upload to the client's Drive. Embed captions into videos. Keep implementation state private and outside all delivery folders. Do not turn technical reports into PDFs or screenshots to bypass this rule. Root context cards are workflow inputs; do not generate duplicate cards or production dumps as campaign deliverables.
+
 ## Station 1 — Intake
 
 The owner feeds `00 – Weekly Context` continuously. Do not ask them to sort, rename, or organize it. Sorting is your job.
@@ -74,7 +78,7 @@ Two paths from the same brief.
 
 Rules for both: first frame is the point, never a logo and never an app screenshot. Mute-safe. 25 to 75 seconds, cap 90; under 25 reads as a fragment. One idea. Recipe on screen as text.
 
-Every piece ends with a VERIFY block listing the facts a person must confirm. If nothing needs confirming, write `verify: clear` explicitly rather than staying silent.
+Keep factual review notes private. Public videos, images and requested documents must not end in internal VERIFY blocks or `verify: clear` markers. Remove unresolved claims from public content or keep the affected asset unfinished until evidence is available.
 
 ## Station 5 — Approve
 
@@ -85,7 +89,7 @@ Two modes. The owner chooses and can change it any time.
 
 Anything in `03 – Revision Requested` gets a revision round, returned with the next weekly batch unless the owner requests an immediate rebuild. If there is no note explaining what was wrong, make your best judgment and say what changed. A rejected complete campaign stays rejected; exported-file counts do not overrule the owner's creative rejection.
 
-Never move a file out of `01 – Waiting` yourself. That drag belongs to the owner.
+Never move a file out of `01 – Waiting` to imply the owner's approval. Explicitly authorized deletion or reset follows standing rule 8 and does not require another approval request.
 
 ## Station 6 — Schedule
 

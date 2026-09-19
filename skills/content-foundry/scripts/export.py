@@ -53,13 +53,15 @@ def main():
     ap.add_argument("--descriptor", required=True)
     ap.add_argument("--channels", required=True, help="comma list: ig,fb,li,...")
     ap.add_argument("--outdir", default="output")
+    ap.add_argument('--manifest', help='private composite manifest; defaults to legacy source sidecar')
+    ap.add_argument('--metadata-dir', help='private export receipt directory, outside --outdir')
     args = ap.parse_args()
 
     asset_p = Path(args.asset)
     if not asset_p.exists():
         print(f"STOP: asset not found: {asset_p}", file=sys.stderr)
         return 1
-    man_p = asset_p.with_suffix(".composite.json")
+    man_p = Path(args.manifest) if args.manifest else asset_p.with_suffix(".composite.json")
     if not man_p.exists():
         print(f"STOP: refusing to export — no composite manifest at {man_p}. "
               f"Only linted, provenance-carrying assets get channel names.",
@@ -77,7 +79,14 @@ def main():
 
     img = Image.open(asset_p).convert("RGB")
     outdir = Path(args.outdir)
+    resolved_out = outdir.resolve()
+    public_root = next((p for p in (resolved_out, *resolved_out.parents) if p.name in ('output', 'delivery')), resolved_out)
+    metadata_dir = Path(args.metadata_dir) if args.metadata_dir else public_root.parent / 'working' / 'export-receipts'
+    if metadata_dir.resolve().is_relative_to(public_root):
+        print('STOP: export metadata must be outside the public output directory', file=sys.stderr)
+        return 1
     outdir.mkdir(parents=True, exist_ok=True)
+    metadata_dir.mkdir(parents=True, exist_ok=True)
     today = date.today().isoformat()
     stem = "_".join([slugify(args.agent_slug), slugify(args.type),
                      slugify(args.descriptor), today])
@@ -119,7 +128,7 @@ def main():
         "results": results,
         "refused": [{"channel": c, "reason": r} for c, r in refused],
     }
-    sum_p = outdir / f"{stem}_export.json"
+    sum_p = metadata_dir / f"{stem}_export.json"
     sum_p.write_text(json.dumps(summary, indent=2))
 
     print(f"EXPORT {asset_p.name}")

@@ -6,12 +6,12 @@ from PIL import Image
 
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('run');a=ap.parse_args();r=Path(a.run)
-    out=r/'delivery/06 Review';out.mkdir(parents=True,exist_ok=True)
+    out=r/'working/review/handoff';out.mkdir(parents=True,exist_ok=True)
     brand=json.loads((r/'context/brand.json').read_text());errors=[];video=[]
     for j in json.loads((r/'working/delivery-manifest.json').read_text()):
         p=Path(j['output']);props=json.loads(Path(j['props']).read_text())
         duration=float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','csv=p=0',str(p)]))
-        srt=p.with_suffix('.srt');cues=[]
+        srt=Path(j['subtitles']) if j.get('subtitles') else r/'working/subtitles'/f"{j['id']}.srt";cues=[]
         if any(s.get('voice') for s in props['scenes']) and not j['id'].startswith('teaser'):
             if not srt.exists():errors.append(j['id']+': missing subtitles')
             else:

@@ -19,6 +19,7 @@ API = "https://api.post-bridge.com/v1"
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.realpath(__file__)))
 import config as _cfg
+import pb
 NAME = dict(_cfg.NAME)
 MIN_GAP = _cfg.MIN_GAP
 LADDER = ["11:15", "13:20", "15:00", "20:30", "12:00", "18:00", "10:00", "09:15"]
@@ -29,12 +30,7 @@ def ct(d):
 
 
 def api(path, method="GET", body=None):
-    k = json.load(open(os.path.expanduser("~/.config/post-bridge/config.json")))["apiKey"]
-    r = urllib.request.Request(f"{API}{path}", method=method,
-        headers={"Authorization": f"Bearer {k}", "Content-Type": "application/json"},
-        data=json.dumps(body).encode() if body else None)
-    with urllib.request.urlopen(r) as resp:
-        return json.load(resp)
+    return pb.req(path, method, body)
 
 
 def live():
