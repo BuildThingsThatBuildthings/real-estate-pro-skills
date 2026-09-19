@@ -11,6 +11,7 @@ Times are Nashville CT; scheduled_at is written in UTC.
 """
 import json, os, sys, argparse, urllib.request
 from collections import defaultdict
+from zoneinfo import ZoneInfo
 from datetime import datetime, timedelta, timezone, date
 
 API = "https://api.post-bridge.com/v1"
@@ -45,8 +46,19 @@ BLOCK = _cfg.BLOCK_DAYS
 
 
 def ct_offset(d):
-    """CDT (UTC-5) Mar-Nov, else CST (UTC-6). Good enough for scheduling."""
-    return timezone(timedelta(hours=-5 if 3 <= d.month <= 11 else -6))
+    """The real Nashville offset for that date, from the tz database.
+
+    This used to approximate DST as "March through November is UTC-5", which is
+    wrong for the ~5 weeks a year that fall inside those months but outside DST:
+    Nov 2-30 and Mar 1 through the second Sunday. Every slot planned in that
+    window was written an hour off, and create_batch.py -- which reads the real
+    zone -- then rejected it as "not in allowed set". The planner and the linter
+    have to agree about what time it is.
+    """
+    if isinstance(d, datetime):
+        d = d.date()
+    noon = datetime(d.year, d.month, d.day, 12, tzinfo=ZoneInfo("America/Chicago"))
+    return timezone(noon.utcoffset())
 
 
 def api(path):
