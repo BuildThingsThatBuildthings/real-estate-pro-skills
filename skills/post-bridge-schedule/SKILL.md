@@ -1,9 +1,15 @@
 ---
 name: post-bridge-schedule
-description: End to end posting pipeline for Post Bridge. Takes a folder of finished video and carries it to verified scheduled records: inventory, transcription, claim verification, brand voice, analytics-derived posting windows, ramp planning, collision detection, per-channel captions, image card generation, preflight lint, approval gate, creation, and post-create repair. Channel set, cadence and copy rules all come from config. Use when scheduling a batch of finished content, filling or ramping a posting calendar, auditing schedule health, or repairing collisions and duplicate destinations. Triggers on "/post-bridge-schedule", "schedule this batch", "fill the calendar", "ramp the schedule", "post this content", "how full is the calendar", "check the schedule", or a folder of finished video dropped for posting.
+description: "End to end posting pipeline for Post Bridge. Takes a folder of finished video and carries it to verified scheduled records: inventory, transcription, claim verification, brand voice, analytics-derived posting windows, ramp planning, collision detection, per-channel captions, image card generation, preflight lint, approval gate, creation, and post-create repair. Channel set, cadence and copy rules all come from config. Use when scheduling a batch of finished content, filling or ramping a posting calendar, auditing schedule health, or repairing collisions and duplicate destinations. Triggers on \"/post-bridge-schedule\", \"schedule this batch\", \"fill the calendar\", \"ramp the schedule\", \"post this content\", \"how full is the calendar\", \"check the schedule\", or a folder of finished video dropped for posting."
 ---
 
 # Post Bridge posting pipeline
+
+## Watcher value — required in this workflow
+
+Every audience-facing video/asset must earn attention through **hook → retain → reward**: a compelling spoken/visible opening, concrete reasons to continue, and the actual promised payoff. Follow the [watcher-value contract](/Users/ryan/video_agent/docs/WATCHER_VALUE_CONTRACT.md) and record source-linked delivery evidence. Empty provocation, withheld answers, decorative padding and unsupported claims fail. Valid JSON alone cannot establish semantic or audiovisual quality.
+
+Before uploads or scheduling writes, require current approved final-file review for hook, retention and fulfilled promise, with matching media SHA and caption claims. Unreviewed, missing-value or rerendered-with-stale-review assets remain unscheduled. Existing live Post Bridge reconciliation, duplicates, guarded transport, cadence and receipts remain authoritative.
 
 A folder of finished video goes in. Verified scheduled records come out.
 
@@ -248,6 +254,9 @@ ffmpeg -nostdin -pattern_type glob -i "gmb/*.jpg" -vf "scale=340:340,tile=5x5" -
 
 All distinct, grounded in the transcript. Plus, where the platform supports it:
 - a **video title**, within the platform's limit
+  - **YouTube title and description:** written only from this clip's own transcript, never from the source video's old metadata, and with no hashtags (including `#shorts`).
+  - Each claim in the title must be something the clip says. Don't use a model, product name or number the clip doesn't say.
+  - If the `youtube-optimizer` skill is installed, run its `gate.py package` on the YouTube copy before the approval gate.
 - a **first comment** for any link on platforms that strip URLs from the body
 - a **call to action** for the image-only platform
 - a **cover frame** for vertical video surfaces
