@@ -4,7 +4,7 @@ Repair structural defects in the live Post Bridge calendar.
 
   repair.py scan                    report defects, change nothing
   repair.py fix --dedupe            collapse duplicate destinations in a record
-  repair.py fix --collisions        reschedule to clear the 90-minute same-channel rule
+  repair.py fix --collisions        reschedule to clear the 45-minute same-channel rule
   repair.py fix --all               both
 
 Every write is verified by re-reading the record, and retried up to 4 times.
@@ -20,13 +20,31 @@ import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.realpath(__file__)))
 import config as _cfg
 import pb
+import schedule_engine as _engine
 NAME = dict(_cfg.NAME)
-MIN_GAP = _cfg.MIN_GAP
-LADDER = ["11:15", "13:20", "15:00", "20:30", "12:00", "18:00", "10:00", "09:15"]
+MIN_GAP = _cfg.MIN_GAP          # same account
+MIN_STAGGER = int(getattr(_cfg, "MIN_GLOBAL_STAGGER", 10))  # any other account
+LADDER = []  # analytics-derived in an explicit `fix` run, never while importing; see allowed_ladder()
 
 
 def ct(d):
-    return timezone(timedelta(hours=-5 if 3 <= d.month <= 11 else -6))
+    """Nashville time from the tz database, the same zone schedule_engine and create_batch use.
+
+    This used to guess DST as "March through November is UTC-5", which is an hour off from
+    Nov 2-30 and Mar 1 to the second Sunday, so every move in those weeks was written an hour wrong.
+    """
+    return _engine.TZ
+
+
+def allowed_ladder():
+    """Every daypart ladder slot, in ladder order: the set create_batch lint allows.
+
+    Reuses schedule_engine's derivation (windows.rows -> windows.ladder_order). The old hardcoded list offered
+    15:00, 20:30, 12:00, 18:00 and 10:00, which the lint rejects. No guessed fallback: if
+    analytics cannot be read this raises and nothing is moved.
+    """
+    _engine._derived_slots()
+    return [s for s in _engine.LADDER if _engine.windows.in_window(s)]
 
 
 def api(path, method="GET", body=None):
@@ -86,6 +104,8 @@ def find_defects(posts):
 
 def free_slot(post, posts, taken):
     """Earliest allowed slot from this post's own day forward that clears MIN_GAP."""
+    if not LADDER:
+        raise RuntimeError("No analytics-derived slot ladder; repair is blocked")
     ev = occupancy(posts, exclude=post["id"])
     for a, times in taken.items():
         ev[a].extend(times)
@@ -94,11 +114,15 @@ def free_slot(post, posts, taken):
     for dayoff in range(0, 14):
         day = day0 + timedelta(days=dayoff)
         for s in LADDER:
+            if not _engine.windows.in_window(s):
+                continue  # 06:00-22:00 CT inclusive: 22:00 is legal, 22:15 is not
             hh, mm = map(int, s.split(":"))
             cand = datetime.combine(day, datetime.min.time()).replace(
                 hour=hh, minute=mm, tzinfo=ct(day))
             if all(abs((cand - t).total_seconds()) / 60 >= MIN_GAP
-                   for a in chans for t in ev[a]):
+                   for a in chans for t in ev[a]) and \
+                    all(abs((cand - t).total_seconds()) / 60 >= MIN_STAGGER
+                        for times in ev.values() for t in times):
                 return cand
     return None
 
@@ -157,7 +181,12 @@ def cmd_fix(a):
             print(f"dedupe {p['id'][:8]}: {len(p['social_accounts'])} -> {n}  "
                   f"{'OK' if ok else 'FAILED'} ({note})")
     if a.collisions or a.all:
+        global LADDER
+        LADDER = allowed_ladder()
         posts = live()
+        # Only scheduled records are ever moved, but posted and processing records still hold
+        # their channel's window, exactly as schedule_engine.live_posts counts them.
+        busy = _engine.live_posts()
         byid = {p["id"]: p for p in posts}
         _, _, moves = find_defects(posts)
         taken = defaultdict(list)
@@ -167,7 +196,7 @@ def cmd_fix(a):
                 continue
             done.add(loser)
             p = byid[loser]
-            slot = free_slot(p, posts, taken)
+            slot = free_slot(p, busy, taken)
             if not slot:
                 print(f"move {loser[:8]}: NO FREE SLOT within 14 days")
                 continue

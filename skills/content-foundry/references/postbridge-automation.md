@@ -30,8 +30,11 @@ formality. Never shorten it to make a demo look better.
    successful and produces nothing.
 3. **Upload once per platform group.** Media is uploaded once and referenced by multiple posts —
    don't re-upload the same file per channel.
-4. **Create posts.** One `create_post` per platform, each with that channel's caption variant from
-   Stage 6 and its `scheduled_at`.
+4. **Create posts.** Only through `~/.claude/skills/post-bridge-schedule/scripts/create_batch.py`
+   (`lint batch.json`, then `create batch.json`): one record per creative, each channel carrying its own
+   caption variant from Stage 6 and the planned `scheduled_at`. Never call connector `create_post`
+   directly; for AIA/BT2 a global hook blocks it and only the social agent and video agent schedule
+   (Ryan, 2026-09-27).
 5. **Poll results.** The post is not done until per-platform results confirm. Write `posts.json`
    (post ids, per-platform status, scheduled times) into the run directory.
 6. **Report.** Tell the user what's queued, when each goes out, where the dashboard is, and how to

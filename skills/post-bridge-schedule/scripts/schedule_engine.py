@@ -4,7 +4,18 @@ Post Bridge scheduling engine. Channel set comes from config/channels.json.
 
   status                 current posts/day per 30-day block, next rung, gaps
   collisions             same-channel collisions in the live calendar
-  plan  --count N        propose N placements honoring ramp + slots + 90-min rule
+  plan  --count N        propose N placements honoring ramp + slots + spacing rules
+                         (read only: prints placements, writes nothing)
+
+Placement spreads each day across dayparts (windows.DAYPARTS, CT): morning
+06-11, afternoon 12-16, evening 17:00-22:00. The posting window is 06:00 to
+22:00 inclusive (config windows.earliest_start / latest_start): a post may start
+exactly at 22:00, never after, never before 06:00. The next post on a day goes to that
+day's emptiest daypart, counting posts already scheduled there.
+
+Spacing: min_gap_minutes (45) between posts on the SAME account; across
+different accounts only min_global_stagger_minutes (10). A planned post targets
+every configured channel, so for it "same account" is every channel.
 
 Reads the API key from ~/.config/post-bridge/config.json (same as the post-bridge CLI).
 Times are Nashville CT; scheduled_at is written in UTC.
@@ -19,30 +30,30 @@ import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.realpath(__file__)))
 import config as _cfg
 import pb
+import windows
+import math
 CHANNELS = dict(_cfg.NAME)
 N_CH = len(CHANNELS)
 RUNGS = list(_cfg.RUNGS)
 def _derived_slots():
-    """Slot ladder derived from live analytics. Falls back to the last
-    known-good ladder if analytics are unavailable."""
-    try:
-        import subprocess, os as _os
-        out = subprocess.run(
-            ["python3", _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "windows.py"),
-             "ladder", "--json"], capture_output=True, text=True, timeout=120)
-        lad = json.loads(out.stdout)
-        return {int(k): v for k, v in lad.items()}
-    except Exception:
-        return {3: ["11:15", "15:15", "18:15"],
-                5: ["11:15", "15:15", "18:15", "20:15", "12:15"],
-                7: ["11:15", "15:15", "18:15", "20:15", "12:15", "13:20", "10:15"],
-                8: ["11:15", "15:15", "18:15", "20:15", "12:15", "13:20", "10:15", "09:15"]}
+    """Use the same daypart ladder as create_batch and repair, never guessed slots."""
+    rows = windows.rows()
+    # Full daypart round-robin order: the lint's allowed set and the fallback ladder.
+    global LADDER
+    LADDER = windows.ladder_order(rows)
+    slots = {r: LADDER[:r] for r in RUNGS}
+    if any(not slots.get(r) for r in RUNGS):
+        raise RuntimeError("No analytics-supported slot ladder; planning is blocked")
+    return slots
 
 
 SLOTS = {}  # derive only in an explicit CLI run, never while importing
 FORBIDDEN_HOURS = set(_cfg.FORBIDDEN_HOURS)
 MIN_GAP_MIN = _cfg.MIN_GAP
+MIN_STAGGER_MIN = int(getattr(_cfg, "MIN_GLOBAL_STAGGER", 10))
 BLOCK = _cfg.BLOCK_DAYS
+TZ = ZoneInfo("America/Chicago")
+LEAD_HOURS = float(getattr(_cfg, "LEAD_HOURS", 1))  # pipeline.json approval.lead_hours
 
 
 def ct_offset(d):
@@ -66,23 +77,25 @@ def api(path):
 
 
 def live_posts():
-    out, off = [], 0
-    while True:
-        page = api(f"/posts?status=scheduled&limit=100&offset={off}")
-        out += page["data"]
-        if not page["meta"].get("next"):
-            break
-        off += 100
-    return [p for p in out if not p.get("is_draft") and p.get("scheduled_at")]
+    return [p for p in pb.paged('/posts')
+            if p.get('status') in {'scheduled', 'posted', 'processing'}
+            and not p.get('is_draft') and p.get('scheduled_at')]
 
 
 def occupancy(posts):
     """channel -> sorted [datetime CT]; and date -> content units"""
     per_ch, per_day = defaultdict(list), defaultdict(int)
+    seen = set()
     for p in posts:
+        if p.get('id') and p['id'] in seen:
+            continue
+        if p.get('id'):
+            seen.add(p['id'])
         t = datetime.fromisoformat(p["scheduled_at"].replace("Z", "+00:00"))
-        d = t.astimezone(ct_offset(t)).replace(tzinfo=None)
-        for a in set(p["social_accounts"]):
+        if t.tzinfo is None:
+            raise ValueError('scheduled_at must have an offset')
+        d = t.astimezone(TZ).replace(tzinfo=None)
+        for a in {int(x) for x in p.get("social_accounts", [])}:
             if a in CHANNELS:
                 per_ch[a].append(d)
                 per_day[d.date()] += 1
@@ -91,8 +104,20 @@ def occupancy(posts):
     return per_ch, per_day
 
 
-def blocks(today):
-    return [[today + timedelta(days=i) for i in range(s, s + BLOCK)] for s in (0, BLOCK, 2 * BLOCK)]
+def blocks(today, count=None):
+    count = count if count is not None else _cfg.HORIZON_BLOCKS
+    return [[today + timedelta(days=i) for i in range(b * BLOCK, (b + 1) * BLOCK)]
+            for b in range(count)]
+
+
+def first_day(now=None):
+    now = now or datetime.now(TZ)
+    return (now.astimezone(TZ) + timedelta(hours=LEAD_HOURS)).date()
+
+
+def gap(units, rung):
+    # Never round 8/9 deliveries up to a completed post. A new post adds N_CH units.
+    return max(0, math.ceil((rung * N_CH - units) / N_CH))
 
 
 def posts_per_day(per_day, days):
@@ -102,25 +127,27 @@ def posts_per_day(per_day, days):
 def cmd_status(args):
     posts = live_posts()
     per_ch, per_day = occupancy(posts)
-    today = date.today()
+    today = first_day()
     bs = blocks(today)
-    print(f"live scheduled records: {len(posts)}")
+    print(f"live dated scheduled/posted/processing records: {len(posts)}")
     tot_units = sum(per_day.values())
-    print(f"content units on the 9 channels: {tot_units}  (~{tot_units/N_CH:.1f} posts)\n")
+    print(f"content units on the {N_CH} channels: {tot_units}  (~{tot_units/N_CH:.1f} posts)\n")
     cur = None
-    for i, blk in enumerate(bs[:2], 1):
+    for i, blk in enumerate(bs, 1):
         ppd = posts_per_day(per_day, blk)
         avg = sum(ppd.values()) / len(blk)
         print(f"Block {i}  {blk[0]} -> {blk[-1]}   avg {avg:.2f} posts/day")
         for r in RUNGS:
-            need = sum(max(0, r - round(ppd[d])) for d in blk)
+            need = sum(gap(per_day.get(d, 0), r) for d in blk)
             print(f"    to {r}/day: {need:4d} posts short")
     for r in RUNGS:
-        if any(round(posts_per_day(per_day, b)[d]) < r for b in bs[:2] for d in b):
+        if any(gap(per_day.get(d, 0), r) for b in bs for d in b):
             cur = r
             break
-    cur = cur or 8
-    print(f"\ncurrent rung: {cur}/day   slots: {', '.join(SLOTS[cur])} CT")
+    if cur is None:
+        print(f"\ninitial blocks complete; open block {_cfg.HORIZON_BLOCKS + 1} at {RUNGS[0]}/day")
+    else:
+        print(f"\ncurrent rung: {cur}/day   slots: {', '.join(SLOTS[cur])} CT")
 
 
 def cmd_collisions(args):
@@ -140,62 +167,164 @@ def cmd_collisions(args):
             for x, y, g in bad[:5]:
                 print(f"    {x:%Y-%m-%d %H:%M} -> {y:%H:%M}  ({g:.0f} min)")
     print(f"\nTOTAL same-channel collisions: {total}")
+    # Cross-account stagger: informational, the 45-minute rule is per account.
+    allt = sorted({t for ev in per_ch.values() for t in ev})
+    close = sum(1 for i in range(1, len(allt))
+                if (allt[i] - allt[i - 1]).total_seconds() / 60 < MIN_STAGGER_MIN)
+    print(f"distinct times closer than the {MIN_STAGGER_MIN}-min cross-account stagger: {close}")
     if dupes:
         print(f"records with duplicate destinations: {len(dupes)} -> {dupes[:5]}")
 
 
 LADDER = []  # populated with SLOTS during an explicit CLI run
+DAYPART_NAMES = windows.DAYPART_NAMES
 
 
-def free_slot(per_ch, day, slot_list, pending):
-    """First slot on `day` clearing MIN_GAP_MIN on all 9 channels.
+def daypart_slots(extra=()):
+    """{daypart: [slots best first]} from LADDER (plus any `extra` rung slots).
 
-    A rung is a COUNT target, not a slot whitelist: prefer the rung's own slots,
-    then fall back down the full analytics-ordered ladder so a day whose preferred
-    slot is blocked by an existing post still reaches the rung.
+    LADDER is a daypart round-robin, so filtering it by daypart keeps each
+    daypart's own score order. Slots outside every daypart go last under None.
     """
-    ordered = list(slot_list) + [x for x in LADDER if x not in slot_list]
+    out = {n: [] for n in DAYPART_NAMES}
+    out[None] = []
+    for s in list(LADDER) + [x for x in extra if x not in LADDER]:
+        out[windows.daypart_of(s)].append(s)
+    return out
+
+
+def day_load(per_ch, pending, day):
+    """{daypart: posts already on `day`}, in full-post equivalents (a record on
+    k of the N_CH channels counts k/N_CH, the same units the rung gap uses)."""
+    load = {n: 0.0 for n in DAYPART_NAMES}
+    for a, times in per_ch.items():
+        if a not in CHANNELS:
+            continue
+        for t in times:
+            dp = windows.daypart_of(t.hour)
+            if t.date() == day and dp:
+                load[dp] += 1 / N_CH
+    for e in pending:
+        dp = windows.daypart_of(e[0].hour)
+        if e[0].date() == day and dp:
+            load[dp] += len(_pending_accounts(e) & set(CHANNELS)) / N_CH
+    return load
+
+
+def day_candidates(per_ch, pending, day, rung_slots=()):
+    """Slots for the next post on `day`: emptiest daypart first (ties go
+    morning, afternoon, evening), each daypart's slots best first. On an empty
+    day that is best morning, best afternoon, best evening, next morning, next
+    afternoon. A day that already holds posts fills its emptiest dayparts."""
+    load = day_load(per_ch, pending, day)
+    parts = daypart_slots(rung_slots)
+    order = sorted(DAYPART_NAMES, key=lambda n: (round(load[n], 6), DAYPART_NAMES.index(n)))
+    return [s for n in order for s in parts[n]] + parts[None]
+
+
+def _pending_accounts(entry):
+    """pending entries are (time, label) for a full-roster post, or (time, label, accounts)."""
+    return set(entry[2]) if len(entry) > 2 else set(CHANNELS)
+
+
+def slot_conflict(cand, accounts, per_ch, pending):
+    """Why `cand` (naive CT) cannot hold a post on `accounts`, or None if it can.
+
+    MIN_GAP_MIN applies only to posts sharing an account with the candidate.
+    Every other post, on any configured account, only needs MIN_STAGGER_MIN.
+    """
+    for a in accounts:
+        times = list(per_ch.get(a, [])) + [e[0] for e in pending if a in _pending_accounts(e)]
+        for t in times:
+            if abs((cand - t).total_seconds()) / 60 < MIN_GAP_MIN:
+                return f"{CHANNELS.get(a, a)} within {MIN_GAP_MIN} min of {t:%H:%M}"
+    others = [t for ev in per_ch.values() for t in ev] + [e[0] for e in pending]
+    for t in others:
+        if abs((cand - t).total_seconds()) / 60 < MIN_STAGGER_MIN:
+            return f"within the {MIN_STAGGER_MIN}-min cross-account stagger of {t:%H:%M}"
+    return None
+
+
+def free_slot(per_ch, day, slot_list, pending, earliest=None, accounts=None):
+    """First slot on `day` that clears the spacing rules for `accounts`.
+
+    `accounts` defaults to every configured channel, because a planned post fans
+    out to all of them as ONE record. The 45-minute gap is checked on those
+    accounts only; posts on other accounts need just the global stagger.
+
+    A rung is a COUNT target, not a slot whitelist: prefer the listed slots. A
+    blocked slot falls back to the rest of its own daypart first (best first),
+    then to the rest of the ladder, so a day whose preferred slot is blocked by
+    an existing post still reaches the rung without drifting to another part of
+    the day.
+    """
+    accounts = set(CHANNELS) if accounts is None else set(accounts)
+    ordered = []
+    for s in slot_list:
+        dp = windows.daypart_of(s)
+        for x in [s] + [x for x in LADDER if dp and windows.daypart_of(x) == dp]:
+            if x not in ordered:
+                ordered.append(x)
+    ordered += [x for x in LADDER if x not in ordered]
     for s in ordered:
         hh, mm = map(int, s.split(":"))
-        if hh in FORBIDDEN_HOURS:
+        if hh in FORBIDDEN_HOURS or not windows.in_window(s):
             continue
         cand = datetime.combine(day, datetime.min.time()).replace(hour=hh, minute=mm)
-        ok = True
-        for a in CHANNELS:
-            times = per_ch[a] + [t for t, _ in pending]
-            if any(abs((cand - t).total_seconds()) / 60 < MIN_GAP_MIN for t in times):
-                ok = False
-                break
-        if ok:
+        if earliest is not None and cand.replace(tzinfo=TZ) < earliest:
+            continue
+        if slot_conflict(cand, accounts, per_ch, pending) is None:
             return cand
     return None
 
 
-def cmd_plan(args):
-    posts = live_posts()
+def plan_placements(posts, count, *, now=None):
+    """Fill each block in order at each rung; any unfillable gap stops advancement.
+
+    Initial horizon uses the configured blocks. Once all reach the top rung,
+    open one further block and restart at the first rung, as the skill specifies.
+    This function is pure: callers supply live records and analytics slots.
+    """
+    if count < 0 or not RUNGS or N_CH < 1 or BLOCK < 1 or _cfg.HORIZON_BLOCKS < 1:
+        raise ValueError('Invalid count, channels, or ramp configuration')
+    now = now or datetime.now(TZ)
+    if now.tzinfo is None:
+        raise ValueError('now must be timezone-aware')
+    earliest = now.astimezone(TZ) + timedelta(hours=LEAD_HOURS)
     per_ch, per_day = occupancy(posts)
-    today = date.today()
-    bs = blocks(today)
     placements, pending = [], []
-    remaining = args.count
-    for rung in RUNGS:
-        for bi, blk in enumerate(bs[:2], 1):
-            for d in blk:
-                if remaining <= 0:
-                    break
-                have = round(posts_per_day(per_day, blk)[d] + sum(1 for t, _ in pending if t.date() == d))
-                while have < rung and remaining > 0:
-                    slot = free_slot(per_ch, d, SLOTS[rung], pending)
-                    if slot is None:
-                        break
-                    pending.append((slot, f"block{bi}"))
-                    placements.append((slot, rung, bi))
-                    have += 1
-                    remaining -= 1
-            if remaining <= 0:
-                break
-        if remaining <= 0:
-            break
+    remaining = count
+    first = 0
+    width = _cfg.HORIZON_BLOCKS
+    while remaining:
+        for rung in RUNGS:
+            for bi in range(first, first + width):
+                days = [earliest.date() + timedelta(days=bi * BLOCK + i) for i in range(BLOCK)]
+                blocked = []
+                for d in days:
+                    have = per_day.get(d, 0) + N_CH * sum(t.date() == d for t, _ in pending)
+                    while gap(have, rung) and remaining:
+                        slot = free_slot(per_ch, d, day_candidates(per_ch, pending, d, SLOTS[rung]),
+                                         pending, earliest)
+                        if slot is None:
+                            blocked.append({'date': d.isoformat(), 'block': bi + 1,
+                                            'rung': rung, 'missing_posts': gap(have, rung)})
+                            break
+                        pending.append((slot, f'block{bi + 1}'))
+                        placements.append((slot, rung, bi + 1))
+                        have += N_CH
+                        remaining -= 1
+                    if not remaining:
+                        return placements, []
+                if blocked:
+                    return placements, blocked
+        first += width
+        width = 1
+    return placements, []
+
+
+def cmd_plan(args):
+    placements, blocked = plan_placements(live_posts(), args.count)
     placements.sort()
     print(f"{'#':>3}  {'DATE':<12} {'CT':<6} {'UTC':<20} {'RUNG':<5} BLOCK  COLLISION")
     for i, (t, rung, bi) in enumerate(placements, 1):
@@ -203,12 +332,15 @@ def cmd_plan(args):
         print(f"{i:>3}  {t:%Y-%m-%d} {t:%a}  {t:%H:%M}  {utc:%Y-%m-%dT%H:%M:%SZ}  {rung}/day  b{bi}    clear")
     print(f"\nplaced {len(placements)} of {args.count} requested")
     if len(placements) < args.count:
-        print(f"{args.count - len(placements)} could not be placed without violating the {MIN_GAP_MIN}-min rule")
+        print(f"{args.count - len(placements)} could not be placed without violating the "
+              f"{MIN_GAP_MIN}-min same-account gap or the {MIN_STAGGER_MIN}-min stagger")
+    if blocked:
+        print('Ramp advancement blocked by unfilled earlier dates:')
+        print(json.dumps(blocked, indent=2))
 
 
 if __name__ == "__main__":
     SLOTS = _derived_slots()
-    LADDER = SLOTS[8]
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("status").set_defaults(fn=cmd_status)

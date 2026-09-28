@@ -1,19 +1,29 @@
 {
   "_comment": "Cadence, safety rails, and host tool locations. Copy to pipeline.json.",
   "ramp": {
-    "_comment": "Posts per day. Fill block 1 to a rung, then block 2, then advance.",
-    "rungs": [3, 5, 7, 8],
+    "_comment": "Posts per day. Fill every day of block 1, then block 2, to each rung in order; existing records count toward it.",
+    "rungs": [5],
     "block_days": 30,
     "horizon_blocks": 2
   },
   "windows": {
     "_comment": "How posting slots are derived from your own analytics.",
     "min_records_per_hour": 8,
-    "forbidden_hours": [0, 1, 2, 3, 4, 5, 6, 7, 22, 23],
+    "_window": "Posting window 06:00 to 22:00 Central, inclusive: the last post may start exactly at latest_start, never after.",
+    "earliest_start": "06:00",
+    "latest_start": "22:00",
+    "forbidden_hours": [0, 1, 2, 3, 4, 5, 23],
     "view_reliable_platforms": ["youtube", "tiktok", "facebook"],
     "like_signal_platforms": ["instagram"],
     "view_weight": 0.75,
-    "like_weight": 0.25
+    "like_weight": 0.25,
+    "warehouse_url": "",
+    "warehouse_max_age_hours": 48
+  },
+  "min_global_stagger_minutes": 10,
+  "approval": {
+    "_comment": "A new post may be placed as soon as lead_hours from now.",
+    "lead_hours": 1
   },
   "timezone": {
     "_comment": "IANA name plus the UTC offsets used when converting slot times.",

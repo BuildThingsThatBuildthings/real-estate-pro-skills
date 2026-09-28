@@ -1,7 +1,7 @@
 {
   "_comment": "The channel set every post fans out to. One post = one record = one content unit per channel. Copy to channels.json and fill in your own Post Bridge account ids from `list_social_accounts`.",
   "profile": "example",
-  "min_gap_minutes": 90,
+  "min_gap_minutes": 45,
   "image_only_platforms": ["google_business"],
   "video_required_platforms": ["youtube"],
   "channels": {
