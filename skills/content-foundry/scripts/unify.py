@@ -49,6 +49,43 @@ def pdf_text(path):
     return None, None
 
 
+def write_no_drop(drop, out):
+    """A no-drop run (inventory.py recorded drop.mode = none). There is nothing
+    to unify, so the document says so and states where facts may come from.
+    Downstream stages read this instead of inventing a drop."""
+    from_agent = drop.get("satisfied_from_agent_folder") or {}
+    lines = ["# Unified Context",
+             "",
+             "Source drop: **none** (no-drop run, recorded in run.json `drop`)",
+             f"Library job: #{drop.get('job')} {drop.get('job_title')} "
+             f"(research: {drop.get('research')})",
+             f"Decision: {drop.get('reason')}",
+             "",
+             "## Where facts may come from",
+             "",
+             "- Stage 3 research. Every statistic and factual claim needs a cited "
+             "source URL, or it does not ship.",
+             "- The agent folder (Tier 1 identity and voice, Tier 2 brand and "
+             "compliance).",
+             ]
+    for k, v in from_agent.items():
+        lines.append(f"- `{k}` from the agent folder: `{v}`")
+    lines += ["",
+              "There are no dropped photos, documents or recordings. Do not describe, "
+              "reference or imply any. Base imagery is brand ground or generated, per "
+              "`references/engine-stills.md`. Every Stage 8 gate still applies.",
+              "",
+              "---",
+              "MODEL SLOTS TO FILL: 0.",
+              ""]
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text("\n".join(lines))
+    print(f"UNIFY -> {out}")
+    print(f"  no drop (job #{drop.get('job')}); facts come from Stage 3 citations "
+          f"and the agent folder only")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description="Content Foundry Stage 2 — UNIFY")
     ap.add_argument("manifest")
@@ -62,6 +99,9 @@ def main():
     manifest = json.loads(man_p.read_text())
     assets = [a for a in manifest.get("assets", [])
               if a.get("duplicate_of") is None]
+    drop = manifest.get("drop") or {}
+    if not assets and drop.get("mode") == "none":
+        return write_no_drop(drop, Path(args.out))
     if not assets:
         print("STOP: manifest has no usable assets", file=sys.stderr)
         return 1

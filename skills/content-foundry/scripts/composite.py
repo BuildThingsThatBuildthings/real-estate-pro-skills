@@ -271,7 +271,11 @@ def main():
     line_h = int(hsize * 1.18)
     block_h = line_h * len(hlines)
     comp_size = max(MIN_COMPLIANCE_PX, int(H * 0.0145))
-    cfont, _cfb = load_font(None, comp_size, kind="body")
+    body_font_path = brand.body_font  # from brand-context-visual.md
+    cfont, cfell = load_font(body_font_path, comp_size, kind="body")
+    if cfell:
+        manifest["warnings"].append(
+            "body font fell back to a system font — declared body font not resolved")
     comp_line_h = int(comp_size * 1.35)
     # Wrap every compliance string to the safe width. Legal text running off
     # the frame edge is a truncated disclosure — a compliance failure, not a
@@ -290,7 +294,7 @@ def main():
     # dropping copy is the one failure this pipeline exists to prevent.
     sub_font = None; sub_lines = []; sub_lh = 0; sub_h = 0; sub_gap = 0
     if args.subhead:
-        sfit = fit_text(draw, args.subhead, None, text_w, max_lines=3,
+        sfit = fit_text(draw, args.subhead, body_font_path, text_w, max_lines=3,
                         start_size=max(int(hsize * 0.38), int(H * 0.021)),
                         min_size=int(H * 0.015), kind="sans")
         if not sfit:
@@ -299,9 +303,17 @@ def main():
                   f"copy — do not drop it silently.", file=sys.stderr)
             return 1
         sub_font, sub_lines, sub_size, _sfb = sfit
+        if _sfb and not cfell:
+            manifest["warnings"].append(
+                "subhead font fell back — declared body font not resolved")
         sub_lh = int(sub_size * 1.4)
         sub_h = sub_lh * len(sub_lines)
         sub_gap = int(H * 0.02)
+
+    # Which font FILES were actually drawn with, so a reviewer can verify the
+    # declared brand fonts landed (a family-name fallback is otherwise silent).
+    manifest["fonts"] = {"headline": str(getattr(hfont, "path", "") or "") or None,
+                         "body": str(getattr(cfont, "path", "") or "") or None}
 
     # Headline sits above subhead + compliance block, inside the safe zone.
     h_top = H - sb - comp_h - int(H * 0.035) - sub_h - sub_gap - block_h

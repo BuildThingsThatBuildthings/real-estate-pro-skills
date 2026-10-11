@@ -7,6 +7,11 @@ pipeline — the library is a shortcut, not a gate.
 **Research depth:** `skip` (no web search) · `light` (verify facts present in the drop) ·
 `deep` (source and cite market statistics).
 
+**Needs from drop** is machine-read by `scripts/inventory.py`. An entry without it (#4, #7, #8)
+can run with no drop (`inventory.py none --job N`). An entry whose only need the agent folder
+meets (#5, when `brand-context-visual.md` declares a headshot that exists) can too. Any other
+entry needs a drop. Keep the line's wording as a plain list of what the drop must contain.
+
 ---
 
 ## 1. New listing announcement
@@ -40,7 +45,7 @@ pipeline — the library is a shortcut, not a gate.
 
 ## 4. Market update
 
-- **Engine:** stills (Phase 1) → Remotion data video (Phase 2) · **Channels:** li, ig, fb
+- **Engine:** stills, plus the `MarketUpdate` data video (`engine-remotion.md`) · **Channels:** li, ig, fb
 - **Research:** **deep**
 - **Prompt:** {month} market update for {market-area}. Median price, days on market, inventory,
   and the year-over-year direction. Lead with the one statistic that changes a decision.

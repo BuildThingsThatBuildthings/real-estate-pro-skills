@@ -1,7 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Audio, Sequence, staticFile, useVideoConfig} from 'remotion';
 import {
-  Bed, Endcard, FactPins, FittedPhoto, IntroCard, KineticCaption, RoomCallout,
+  Bed, Endcard, endcardLabel, FactPins, FittedPhoto, IntroCard, KineticCaption, RoomCallout,
   VideoProps, useBrandFont,
 } from './shared';
 
@@ -78,6 +78,7 @@ export const Walkthrough: React.FC<VideoProps> = (props) => {
           brand={props.brand}
           subline={props.subline}
           compliance={props.compliance}
+          label={endcardLabel(props)}
           vo={props.endcard.vo}
           voWords={props.endcard.voWords}
         />

@@ -60,6 +60,8 @@ If any answer is vague, say so and keep interviewing.
 - accent:    #______    <!-- used sparingly: CTAs, underlines, rules -->
 - text-on-light: #______
 - text-on-dark:  #______
+- light-ground:  #______    <!-- optional: the brand's paper/light background. Data videos use it;
+                                 absent, they use a light tint of primary -->
 
 ## Logo files
 <!-- Real paths, relative to the agent folder. Setup MUST verify these resolve. -->
@@ -76,8 +78,8 @@ If any answer is vague, say so and keep interviewing.
 - headshot: assets/headshot.jpg
 
 ## Typography
-- headline font: ______        <!-- file path or system/Google font name -->
-- body font:     ______
+- headline font: ______        <!-- file path relative to the agent folder (assets/fonts/Brand.ttf), or a bundled font name -->
+- body font:     ______        <!-- same rules; used for subheads and compliance text on stills and video -->
 - headline case: title | sentence | upper
 - max headline length: ___ characters   <!-- Pretext enforces the wrap; this caps the copy -->
 
@@ -148,7 +150,8 @@ before writing it — a wrong hex silently poisons every future asset.
 
 **Missing compliance wording.** Do not proceed with a guess and do not draft placeholder legal text.
 Write the field as `[PENDING — request from brokerage]`, tell the agent exactly who to ask, and let
-brand lint block production assets until it's filled. A blocked run is recoverable; a non-compliant
+brand lint block production assets until it's filled. A pending field is not a blank template: the
+composite and lint name it as "compliance strings not filled: {field}". A blocked run is recoverable; a non-compliant
 published post is not.
 
 **Thin brands.** An agent with one color and a low-res logo is the common case, not the exception.

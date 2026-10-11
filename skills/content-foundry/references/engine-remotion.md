@@ -4,13 +4,51 @@ Programmatic video for data/text/motion-graphics — the listing-teaser and mark
 workhorse. The engine lives at `engines/remotion/` inside the skill and is driven entirely by
 brand tokens from the agent folder. **The comp never hardcodes a brand fact.**
 
-## Three products, one props file
+## Four products, one props file
 
 | Comp | What it is | Audio |
 |---|---|---|
 | `Walkthrough` | Flagship digital walkthrough: room-by-room, narrated, aspect-aware layouts, kinetic room callouts | music bed + per-room VO |
 | `SalesBrief` | Typography-led digital sales brief: hook → feature cards → community line → CTA | music bed |
 | `Teaser` | 10s hook cut: three strongest rooms | music bed |
+| `MarketUpdate` | Market data video (library #4): hook card → one sourced statistic per card → endcard. Light brand ground, no photographs, so it runs on a no-drop job | music bed, optional endcard VO |
+
+`scenes.json` carries `kind`: `listing` (the default for older files, with a warning), `market` or
+`general`. Only a listing endcard says "Now Showing".
+
+### Market update scenes
+
+```json
+{
+  "kind": "market",
+  "headline": "Nine-county Greater Nashville region, residential sales.",
+  "subline": "Data: Greater Nashville Realtors, July 2026",
+  "hook": "More homes to choose from. Prices mostly holding.",
+  "market": {
+    "area": "Greater Nashville",
+    "period": "July 2026",
+    "ground": "#F4F7FB",
+    "stats": [
+      {"label": "Median home price", "value": "$520,000",
+       "detail": "June was $537,000.", "source": "Greater Nashville Realtors, July 2026 report"}
+    ]
+  }
+}
+```
+
+`video_props.py` stops on a stat with no `source`, `label` or `value`, and on a missing `period`.
+`ground` is optional. Without it the comp uses `light-ground` from `brand-context-visual.md`, then
+a light tint of primary. Inks are picked by measured contrast on that ground: body text must reach
+4.5:1 from `text-on-light`, then primary, then neutral near-black (#111111). Values use primary
+when it reaches 3:1. If nothing reaches 4.5:1 (a dark `ground`), it stops. `scenes` and `brief_cards` are not needed. Keep `value` short
+(`$520,000`, `54`) and put the comparison in `detail`.
+
+### Endcard
+
+Every comp ends on the shared `Endcard`: a flex column inside the safe zone with the compliance
+block reserved at the bottom. The logo is clamped to a box at its real aspect ratio, so a
+near-square logo cannot push text into the legal lines. Endcard text and logo variant are chosen
+for contrast on brand primary, so a light primary gets dark text and the light-background logo.
 
 A fourth product, the Interactive Scroll Tour, lives in `engine-scroll-tour.md`.
 
@@ -37,6 +75,9 @@ A fourth product, the Interactive Scroll Tour, lives in `engine-scroll-tour.md`.
 3. **Props** — `python scripts/video_props.py --agent agents/{slug} --scenes {run}/scenes.json
    --audio-meta {run}/audio_meta.json --out {run}/video-props.json`
    - Brand truth via the same `brandkit.py` as stills; compliance gate identical.
+   - Fonts: the agent's declared `headline font` and `body font` (resolved against the agent
+     folder, like stills) are staged for the comps. Undeclared → bundled display serif and the
+     system sans.
    - Measures each photo's real aspect ratio and each VO clip's duration — **narration drives
      scene timing** (floor 3.5s/scene).
 4. **Render** — `bash scripts/render_video.sh {props} {out}.mp4 {Comp} [extra remotion flags]`
@@ -71,6 +112,6 @@ breaks are deterministic data instead of CSS side effects. See `useHeadlineLines
 
 ## Adding compositions
 
-New comps (market-update data video, carousel-to-video) register in `src/Root.tsx`. Rules:
+New comps (carousel-to-video next) register in `src/Root.tsx`, as `MarketUpdate` does. Rules:
 brand values only via props from `video_props.py`; compliance endcard is non-negotiable; safe
 zones from channel-specs (`SAFE` in the comp); one idea per video; hook in the first 2 seconds.

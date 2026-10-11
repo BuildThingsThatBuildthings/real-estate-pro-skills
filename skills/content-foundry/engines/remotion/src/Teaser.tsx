@@ -1,7 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Sequence, useVideoConfig} from 'remotion';
 import {
-  Bed, Endcard, FittedPhoto, IntroCard, RoomCallout, VideoProps, useBrandFont,
+  Bed, Endcard, endcardLabel, FittedPhoto, IntroCard, RoomCallout, VideoProps, useBrandFont,
 } from './shared';
 
 const TEASER_INTRO_F = 60;
@@ -54,7 +54,7 @@ export const Teaser: React.FC<VideoProps> = (props) => {
       })}
       <Sequence from={TEASER_INTRO_F + picks.length * TEASER_SHOT_F} durationInFrames={endF}>
         <Endcard design={props.design} brand={props.brand} subline={props.subline}
-                 compliance={props.compliance} />
+                 compliance={props.compliance} label={endcardLabel(props)} />
       </Sequence>
     </AbsoluteFill>
   );
