@@ -10,6 +10,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'content-foundry/scripts'))
 from brandkit import AgentBrand, contrast_ratio, hex_to_rgb
 from composite import region_worst
+from font_text import coverage, supported_text
 from production_inputs import Inputs
 
 def render(spec, root, inputs):
@@ -63,7 +64,10 @@ def render(spec, root, inputs):
         elif kind in ('rect','line'):
             d=ImageDraw.Draw(im); d.rectangle(box,fill=layer['color']); evidence.append(layer)
         elif kind=='text':
-            background=im.copy();d=ImageDraw.Draw(im); font=ImageFont.truetype(io.BytesIO(inputs.read(root/layer['font'])),layer['size'])
+            background=im.copy();d=ImageDraw.Draw(im)
+            font_bytes=inputs.read(root/layer['font'])
+            font=ImageFont.truetype(io.BytesIO(font_bytes),layer['size'])
+            layer={**layer,'text':supported_text(layer['text'],coverage(font_bytes),font_bytes)}
             lines=layer['text'].split('\n'); leading=layer.get('leading',round(layer['size']*1.16)); boxes=[]
             for n,line in enumerate(lines):
                 yy=y+n*leading

@@ -23,8 +23,8 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Dependencies (Pillow is content-foundry's one hard dep)
-        run: pip install Pillow
+      - name: Dependencies for content and synthetic font regression tests
+        run: pip install Pillow fonttools
 
       - name: Every script compiles
         run: python3 -m py_compile $(find skills lib scripts tests -name "*.py") && echo compiled
