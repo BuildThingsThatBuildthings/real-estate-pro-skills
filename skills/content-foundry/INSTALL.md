@@ -64,8 +64,11 @@ Everything is saved in one folder with your name on it. You never re-explain you
 - **Video** needs one extra install the first time — Content Foundry will walk you through it
   when you first ask for a video (under the hood: `cd engines/remotion && npm install`, about a
   minute). If you skip it, you still get image versions of everything.
-- **Scheduling** connects to Post Bridge (post-bridge.com). Everything is created as a **draft
-  you approve** — nothing ever publishes by itself.
+- **Scheduling** connects to your own Post Bridge account. Bring your own Post Bridge API key;
+  Content Foundry never uses anyone else's account. Sign up at
+  https://post-bridge.com/?atp=Ai-ry (affiliate link; AI Acceleration may earn a commission).
+  Post Bridge is optional and billed by Post Bridge. Everything is created as a **draft you
+  approve**, and nothing publishes by itself.
 
 ## Support
 
