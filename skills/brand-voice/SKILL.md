@@ -5,6 +5,12 @@ description: Load a brand's voice pack before writing any public facing copy, so
 
 # Brand voice
 
+## Watcher value — required in this workflow
+
+Every audience-facing video/asset must earn attention through **hook → retain → reward**: a compelling spoken/visible opening, concrete reasons to continue, and the actual promised payoff. Follow the [watcher-value contract](/Users/ryan/video_agent/docs/WATCHER_VALUE_CONTRACT.md) and record source-linked delivery evidence. Empty provocation, withheld answers, decorative padding and unsupported claims fail. Valid JSON alone cannot establish semantic or audiovisual quality.
+
+Keep each destination caption's hook and promise within what its attached asset demonstrably delivers. Preserve the real brand voice and evidence; do not invent a stronger result, missing steps or a CTA substituting for the answer. Reading progression and useful payoff apply to copy without forcing a video template.
+
 Copy written without a voice pack reads like a default model wrote it. This skill loads the
 pack first and audits the draft after. It is a dependency of `post-bridge-schedule`, which
 writes one caption per channel and needs to know which voice each channel speaks in.

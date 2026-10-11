@@ -136,15 +136,21 @@ def scoped_channels():
     return {int(value): _cfg.NAME.get(int(value), str(value)) for value in ids}
 
 
-def live_times():
-    """channel -> [datetime UTC] for every scheduled post."""
+def live_times(exclude_ids=()):
+    """channel -> [datetime UTC] for every scheduled post.
+
+    exclude_ids: record ids this batch replaces (a consolidation retires them right
+    after the replacement is created and read back), so they do not block their own
+    replacement's slot.
+    """
+    exclude_ids = set(exclude_ids)
     global CHANNELS
     CHANNELS = scoped_channels()
     per, off = defaultdict(list), 0
     while True:
         page = api(f"/posts?status=scheduled&limit=100&offset={off}")
         for p in page["data"]:
-            if p.get("is_draft") or not p.get("scheduled_at"):
+            if p.get("is_draft") or not p.get("scheduled_at") or p.get("id") in exclude_ids:
                 continue
             t = datetime.fromisoformat(p["scheduled_at"].replace("Z", "+00:00"))
             for a in set(p["social_accounts"]):
@@ -286,9 +292,11 @@ def build(p):
             "scheduled_at": p["scheduled_at"],
         }
     targets = [a for a in CHANNELS if a in caps]
+    # Optional per-account media, e.g. the BT2-branded render for BT2 accounts.
+    by_acct = {int(k): v for k, v in (p.get("media_by_account") or {}).items()}
     cfg = [{"account_id": a,
             "caption": caps[a],
-            "media": [p["gmb_media_id"] if a == GBP else p["video_media_id"]]}
+            "media": by_acct.get(a) or [p["gmb_media_id"] if a == GBP else p["video_media_id"]]}
            for a in targets]
     pc = {
         "youtube": {"title": p["youtube_title"]},
@@ -322,7 +330,7 @@ if __name__ == "__main__":
     mode, path = sys.argv[1], sys.argv[2]
     CHANNELS = scoped_channels()
     batch = json.load(open(path))
-    per_ch = live_times()
+    per_ch = live_times([r for p in batch.get("posts", []) for r in p.get("replaces_record_ids", [])] + list(batch.get("retires_record_ids", [])))
     held = check_do_not_schedule(batch)
     errs = [f"{slug}: project flagged do_not_schedule in {j}" for slug, j in held]
     errs += lint(batch, per_ch)

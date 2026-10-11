@@ -10,6 +10,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'content-foundry/scripts'))
 from brandkit import AgentBrand, contrast_ratio, hex_to_rgb
 from composite import region_worst
+from font_text import coverage, supported_text
 from production_inputs import Inputs
 
 def render(spec, root, inputs):
@@ -64,6 +65,11 @@ def render(spec, root, inputs):
             d=ImageDraw.Draw(im); d.rectangle(box,fill=layer['color']); evidence.append(layer)
         elif kind=='text':
             background=im.copy();d=ImageDraw.Draw(im); font=ImageFont.truetype(io.BytesIO(inputs.read(root/layer['font'])),layer['size'])
+            # Pillow drops a character the font cannot draw without saying anything, so a
+            # compliance line can lose its separators and still pass every string check.
+            # Ask the font first: cmap, .notdef fall-through and real ink.
+            font_path=str((root/layer['font']).resolve())
+            layer['text']=supported_text(layer['text'],coverage(font_path),font_path)
             lines=layer['text'].split('\n'); leading=layer.get('leading',round(layer['size']*1.16)); boxes=[]
             for n,line in enumerate(lines):
                 yy=y+n*leading
