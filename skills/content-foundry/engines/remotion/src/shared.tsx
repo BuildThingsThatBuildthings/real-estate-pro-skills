@@ -19,12 +19,13 @@ export const FPS = 30;
 // IG story/reel safe zones from channel-specs.md.
 export const SAFE = {top: 108, bottom: 320, left: 60, right: 120};
 
-// Brand display font: the bundled OFL serif staged by video_props.py
-// (public/job/font-display.ttf). Loaded via FontFace so renders are identical
-// on every OS; the stack degrades to system serifs when the file is absent.
+// Brand fonts staged by video_props.py: the agent's declared headline font
+// (else the bundled OFL serif) as public/job/font-display.ttf, and the declared
+// body font as public/job/font-body.ttf. Loaded via FontFace so renders are
+// identical on every OS; each stack degrades to system fonts when absent.
 export const serif = '"CF Serif", Didot, "Hoefler Text", Georgia, serif';
 export const sansDisplay = '"CF Sans", "Helvetica Neue", Helvetica, Arial, sans-serif';
-export const sans = 'Helvetica Neue, Helvetica, Arial, sans-serif';
+export const sans = '"CF Body", "Helvetica Neue", Helvetica, Arial, sans-serif';
 
 export type Design = {layout_family?: string; display_type?: string;
                       motion_energy?: string; accent_treatment?: string};
@@ -58,7 +59,11 @@ export const useBrandFont = () => {
         `url(${staticFile('job/font-display.ttf')})`);
       const sansFace = new FontFace('CF Sans',
         `url(${staticFile('job/font-sans.ttf')})`, {weight: '200 900'} as any);
-      Promise.allSettled([serifFace.load(), sansFace.load()]).then((rs) => {
+      // Only staged when the agent declares a body font; a failed load here
+      // leaves the system sans in place, which is the undeclared default.
+      const bodyFace = new FontFace('CF Body',
+        `url(${staticFile('job/font-body.ttf')})`, {weight: '200 900'} as any);
+      Promise.allSettled([serifFace.load(), sansFace.load(), bodyFace.load()]).then((rs) => {
         rs.forEach((r) => {
           if (r.status === 'fulfilled') (document as any).fonts.add(r.value);
         });
@@ -100,10 +105,32 @@ export const propsSchema = z.object({
     secondary: z.string(),
     accent: z.string(),
     textOnDark: z.string(),
+    textOnLight: z.string().optional(),
+    // Endcard ink + logo chosen by video_props.py for legibility on primary.
+    onPrimary: z.string().optional(),
+    labelOnPrimary: z.string().optional(),
     logoDark: z.string(),
+    logoDarkAspect: z.number().optional(),
+    logoLight: z.string().optional(),
+    logoLightAspect: z.number().optional(),
+    endcardLogo: z.string().optional(),
+    endcardLogoAspect: z.number().optional(),
     headshot: z.string().nullable().optional(),
     name: z.string(),
   }),
+  // listing | market | general. Only listing endcards say "Now Showing".
+  kind: z.enum(['listing', 'market', 'general']).optional(),
+  market: z.object({
+    area: z.string(),
+    period: z.string(),
+    ground: z.string(),
+    ink: z.string(),
+    valueInk: z.string(),
+    rule: z.string(),
+    stats: z.array(z.object({
+      label: z.string(), value: z.string(), detail: z.string(), source: z.string(),
+    })),
+  }).nullable().optional(),
   addressChip: z.string().optional(),
   headline: z.string(),
   subline: z.string(),
@@ -435,64 +462,104 @@ export const FactPins: React.FC<{
   );
 };
 
-/** Shared compliance endcard. Optionally narrated. */
+/** "Now Showing" is listing language. Listing is the default kind for older
+ * scenes files, which predate the field. */
+export const endcardLabel = (p: {kind?: string}) =>
+  (p.kind ?? 'listing') === 'listing' ? 'Now Showing' : null;
+
+/** Logo box that fits inside maxW x maxH at the file's real aspect ratio. A
+ * near-square logo is height-bound, a wordmark width-bound; neither can grow
+ * into the text below it. */
+export const logoBox = (aspect: number | undefined, maxW: number, maxH: number) => {
+  const a = aspect && aspect > 0 ? aspect : 3;
+  const w = Math.min(maxW, maxH * a);
+  return {width: Math.round(w), height: Math.round(w / a)};
+};
+
+const CAPTION_BAND = 150;   // two lines of endcard captions at 44px
+
+/**
+ * Shared compliance endcard. Optionally narrated.
+ *
+ * Laid out as one flex column inside the safe zone, top to bottom: the brand
+ * block, the caption band (when narrated), then the compliance block. The
+ * compliance block is in normal flow at the bottom, so its height is reserved
+ * whatever it wraps to. The brand block takes only the space left and clips,
+ * so a tall logo or a long subline can never run into the legal text. The
+ * logo is clamped to a box at its real aspect ratio.
+ */
 export const Endcard: React.FC<{
   brand: VideoProps['brand'];
   subline: string;
   compliance: VideoProps['compliance'];
+  label?: string | null;
   vo?: string | null;
   voWords?: Word[];
   design?: Design;
-}> = ({brand, subline, compliance, vo, voWords, design}) => {
+}> = ({brand, subline, compliance, label = null, vo, voWords, design}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const disp = displayStyle(design);
   const rise = spring({frame, fps, config: springCfg(design), durationInFrames: 30});
+  const ink = brand.onPrimary ?? brand.textOnDark;
+  const logoSrc = brand.endcardLogo ?? brand.logoDark;
+  const logo = logoBox(brand.endcardLogoAspect ?? brand.logoDarkAspect, 620,
+                       brand.headshot ? 220 : 340);
   return (
     <AbsoluteFill style={{backgroundColor: brand.primary}}>
       {vo ? <Audio src={staticFile(vo)} /> : null}
-      <div
-        style={{
-          position: 'absolute', left: SAFE.left, right: SAFE.right,
-          top: brand.headshot ? 520 : 690,
-          textAlign: 'center',
-          transform: `translateY(${(1 - rise) * 50}px)`, opacity: rise,
-        }}
-      >
-        {brand.headshot ? (
-          <Img
-            src={staticFile(brand.headshot)}
-            style={{width: 300, height: 300, borderRadius: '50%',
-                    objectFit: 'cover', margin: '0 auto 48px',
-                    border: `6px solid ${brand.accent}`, display: 'block'}}
-          />
+      <div style={{position: 'absolute', left: 0, right: 0, top: SAFE.top,
+                   bottom: SAFE.bottom, display: 'flex', flexDirection: 'column'}}>
+        <div
+          style={{
+            flex: 1, minHeight: 0, overflow: 'hidden',
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center', textAlign: 'center',
+            paddingLeft: SAFE.left, paddingRight: SAFE.right,
+            transform: `translateY(${(1 - rise) * 50}px)`, opacity: rise,
+          }}
+        >
+          {brand.headshot ? (
+            <Img
+              src={staticFile(brand.headshot)}
+              style={{width: 280, height: 280, borderRadius: '50%', flexShrink: 0,
+                      objectFit: 'cover', marginBottom: 44,
+                      border: `6px solid ${brand.accent}`, display: 'block'}}
+            />
+          ) : null}
+          <Img src={staticFile(logoSrc)}
+               style={{width: logo.width, height: logo.height, flexShrink: 0,
+                       objectFit: 'contain', display: 'block'}} />
+          {label ? (
+            <div style={{fontFamily: disp.fontFamily, fontWeight: 700, fontSize: 36,
+                         letterSpacing: 5, color: brand.labelOnPrimary ?? brand.accent,
+                         marginTop: 52,
+                         textTransform: 'uppercase'}}>
+              {label}
+            </div>
+          ) : null}
+          <div style={{fontFamily: disp.fontFamily, fontSize: 32, color: ink,
+                       lineHeight: 1.3, marginTop: label ? 18 : 48}}>
+            {subline}
+          </div>
+        </div>
+        {voWords && voWords.length ? (
+          <div style={{position: 'relative', height: CAPTION_BAND, flexShrink: 0}}>
+            <KineticCaption words={voWords} brand={brand} design={design}
+                            top={0} fontSize={44} />
+          </div>
         ) : null}
-        <Img src={staticFile(brand.logoDark)} style={{width: 620}} />
-        <div style={{fontFamily: disp.fontFamily, fontWeight: 700, fontSize: 36,
-                     letterSpacing: 5,
-                     color: brand.accent, marginTop: 56,
-                     textTransform: 'uppercase'}}>
-          Now Showing
+        <div
+          style={{
+            flexShrink: 0, marginTop: 40,
+            paddingLeft: SAFE.left, paddingRight: SAFE.right,
+            fontFamily: sans, fontSize: 26, lineHeight: 1.5, color: ink,
+          }}
+        >
+          <div>{compliance.license}</div>
+          <div>{compliance.disclosure}</div>
+          <div>{compliance.fairHousing}</div>
         </div>
-        <div style={{fontFamily: disp.fontFamily, fontSize: 32, color: brand.textOnDark,
-                     marginTop: 18, opacity: 0.92}}>
-          {subline}
-        </div>
-      </div>
-      {voWords && voWords.length ? (
-        <KineticCaption words={voWords} brand={brand} design={design}
-                        top={1330} fontSize={44} />
-      ) : null}
-      <div
-        style={{
-          position: 'absolute', left: SAFE.left, right: SAFE.right,
-          bottom: SAFE.bottom + 24, fontFamily: sans, fontSize: 26,
-          lineHeight: 1.5, color: brand.textOnDark,
-        }}
-      >
-        <div>{compliance.license}</div>
-        <div>{compliance.disclosure}</div>
-        <div>{compliance.fairHousing}</div>
       </div>
     </AbsoluteFill>
   );

@@ -266,6 +266,63 @@ CF_TIER2 = {"GUARDRAILS.md": "brand-context-compliance.md",
             "brand-context-visual.md": "brand-context-visual.md"}
 
 
+# Visual/compliance fields whose values are files relative to the agent folder.
+CF_ASSET_KEYS = ("light background", "dark background", "mark only", "headshot",
+                 "headline font", "body font", "brokerage logo path", "logo path")
+_ASSET_LINE = re.compile(r"^\s*[-*]?\s*(%s)\s*:\s*(.+?)\s*$" % "|".join(map(re.escape, CF_ASSET_KEYS)),
+                         re.IGNORECASE | re.MULTILINE)
+
+
+def _declared_asset_paths(*md_files):
+    """Relative file paths a Tier-2 file declares (logos, headshot, fonts)."""
+    out = []
+    for f in md_files:
+        if not f or not os.path.isfile(f):
+            continue
+        with open(f, encoding="utf-8") as fh:
+            text = re.sub(r"<!--.*?-->", "", fh.read(), flags=re.DOTALL)
+        for _, val in _ASSET_LINE.findall(text):
+            val = val.strip().strip('"').strip()
+            if not val or os.path.isabs(val) or val.startswith("~"):
+                continue
+            if not os.path.splitext(val)[1] or "_" * 3 in val or val.startswith("["):
+                continue  # a family name, a blank, or a pending field
+            out.append(val)
+    return out
+
+
+def _link_declared_assets(src, dest, found):
+    """Link the folders that hold declared logos/headshot/fonts into the agent
+    folder, so `assets/logo.png` resolves there exactly as it does in Drive.
+
+    Links the top-level folder of each declared path (usually `assets/`), looked
+    up next to the Drive brand-context-visual.md first, then the brand-context
+    root, then `my business/`. Returns declared paths that still do not resolve.
+    """
+    visual = found.get("brand-context-visual.md")
+    declared = _declared_asset_paths(visual, found.get("GUARDRAILS.md"))
+    bases = [os.path.dirname(visual)] if visual else []
+    bases += [src, os.path.join(src, "my business")]
+    for rel in declared:
+        top = os.path.normpath(rel).split(os.sep)[0]
+        if top in ("..", "."):
+            continue  # escapes the folder; brandkit refuses it by name
+        d = os.path.join(dest, top)
+        s = next((os.path.join(b, top) for b in bases
+                  if os.path.exists(os.path.join(b, top))), None)
+        if s is None:
+            continue
+        if os.path.islink(d):
+            if os.path.realpath(d) == os.path.realpath(s):
+                continue
+            os.remove(d)
+        elif os.path.exists(d):
+            continue  # a real local file/folder wins; never clobber it
+        os.symlink(s, d)
+    return [f"{rel} (declared in brand-context-visual.md, not found in Drive brand context)"
+            for rel in declared if not os.path.exists(os.path.join(dest, rel))]
+
+
 def cmd_agent_folder(a):
     cfg, cl = client(a.client)
     src = cache_dir(cfg, a.client, "brand-context")
@@ -292,6 +349,7 @@ def cmd_agent_folder(a):
         if os.path.islink(d) or os.path.exists(d):
             os.remove(d)
         os.symlink(s, d)
+    missing += _link_declared_assets(src, dest, found)
     # client and deal cards travel as-is
     for sub in ("my clients", "my deals"):
         s = os.path.join(src, sub)
@@ -308,8 +366,9 @@ def cmd_agent_folder(a):
         print("\n  MISSING, content-foundry will stop at setup:")
         for m in missing:
             print(f"    {m}")
-        print("  brand-context-visual.md holds hexes, logo paths and fonts. Without it")
-        print("  the composite stage cannot place brand colour or the logo.")
+        print("  brand-context-visual.md holds hexes, logo paths and fonts. Without it,")
+        print("  or with a declared logo that does not resolve, the composite stage")
+        print("  cannot place brand colour or the logo.")
     return dest
 
 if __name__ == "__main__":

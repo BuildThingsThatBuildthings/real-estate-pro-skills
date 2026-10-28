@@ -81,6 +81,141 @@ python3 scripts/composite.py --base "$TMP/base.jpg" --agent tests/fixtures/agent
   || ok "demo persona refuses without --allow-demo"
 rm -rf "$TMP"
 
+echo "== no-drop path: research-only library jobs run without a drop =="
+TMP=$(mktemp -d)
+mkdir -p "$TMP/empty"
+python3 scripts/inventory.py "$TMP/empty" --out "$TMP/r0/asset-manifest.json" >/dev/null 2>&1
+[ $? -eq 1 ] && ok "empty drop still stops by default" || bad "empty drop no longer stops"
+python3 scripts/inventory.py "$TMP/empty" --allow-empty --out "$TMP/r0/asset-manifest.json" >/dev/null 2>&1
+[ $? -eq 1 ] && ok "--allow-empty without --job refuses" || bad "no-drop run allowed without naming a job"
+python3 scripts/inventory.py none --job 1 --out "$TMP/r1/asset-manifest.json" >/dev/null 2>&1
+[ $? -eq 1 ] && [ ! -f "$TMP/r1/run.json" ] && ok "listing job (#1) refuses to run with no drop" \
+  || bad "a job that needs drop assets ran with no drop"
+for J in 4 7 8 "market update"; do
+  R="$TMP/r-$(echo $J | tr ' ' '-')"
+  python3 scripts/inventory.py none --job "$J" --out "$R/asset-manifest.json" >/dev/null 2>&1 \
+    && python3 - "$R" <<'PY' && ok "job '$J' runs with no drop and run.json records it" || bad "job '$J' no-drop path broken"
+import json, sys
+r = json.load(open(sys.argv[1] + "/run.json"))["drop"]
+m = json.load(open(sys.argv[1] + "/asset-manifest.json"))["drop"]
+sys.exit(0 if r["mode"] == m["mode"] == "none" and r["job"] in (4, 7, 8) else 1)
+PY
+done
+python3 scripts/inventory.py "$TMP/empty" --allow-empty --job 4 --out "$TMP/r-ae/asset-manifest.json" >/dev/null 2>&1 \
+  && ok "--allow-empty --job 4 on an empty folder runs" || bad "--allow-empty --job 4 refused"
+python3 scripts/unify.py "$TMP/r-4/asset-manifest.json" --out "$TMP/r-4/unified-context.md" >/dev/null 2>&1 \
+  && grep -q "Source drop: \*\*none\*\*" "$TMP/r-4/unified-context.md" \
+  && ok "unify writes a no-drop context document" || bad "unify stops on a recorded no-drop run"
+python3 scripts/unify.py "$TMP/r0/asset-manifest.json" --out "$TMP/r0/u.md" >/dev/null 2>&1
+[ $? -eq 1 ] && ok "unify still stops on an empty drop that was not allowed" || bad "unify accepted an unallowed empty drop"
+# #5 agent intro: the headshot must come from the agent folder
+cp -R tests/fixtures/agent "$TMP/agent"
+python3 scripts/inventory.py none --job 5 --agent "$TMP/agent" --out "$TMP/r5a/asset-manifest.json" >/dev/null 2>&1
+[ $? -eq 1 ] && ok "#5 refuses with no headshot in the agent folder" || bad "#5 ran with no headshot"
+cp tests/fixtures/agent/logos/riley-shore-dark.png "$TMP/agent/logos/headshot.png"
+printf '\n## Headshot\n- headshot: logos/headshot.png\n' >> "$TMP/agent/brand-context-visual.md"
+python3 scripts/inventory.py none --job 5 --agent "$TMP/agent" --out "$TMP/r5b/asset-manifest.json" >/dev/null 2>&1 \
+  && python3 -c "import json,sys; d=json.load(open('$TMP/r5b/run.json'))['drop']; sys.exit(0 if 'headshot' in d['satisfied_from_agent_folder'] else 1)" \
+  && ok "#5 runs when the agent folder has a headshot" || bad "#5 refused despite a headshot"
+rm -rf "$TMP"
+
+echo "== agent folder: fonts, pending wording, linked assets =="
+TMP=$(mktemp -d)
+python3 -c "from PIL import Image; Image.new('RGB',(1200,1500),(16,42,67)).save('$TMP/base.jpg')"
+cp -R tests/fixtures/agent "$TMP/agent"
+mkdir -p "$TMP/agent/fonts"
+cp assets/fonts/PlayfairDisplay.ttf "$TMP/agent/fonts/Headline.ttf"
+cp assets/fonts/SourceSans3.ttf "$TMP/agent/fonts/Body.ttf"
+printf -- '- headline font: fonts/Headline.ttf\n- body font: fonts/Body.ttf\n' >> "$TMP/agent/brand-context-visual.md"
+HERE=$PWD
+(cd "$TMP" && python3 "$HERE/scripts/composite.py" --base base.jpg --agent agent --channel ig \
+  --headline "The county record says 2,400 square feet." --subhead "Showings start Saturday." \
+  --allow-demo --out out.jpg >/dev/null 2>&1)
+python3 - "$TMP" <<'PY' && ok "relative headline/body fonts resolve against the agent folder" || bad "declared fonts ignored or resolved against the cwd"
+import json, sys
+m = json.load(open(sys.argv[1] + "/out.composite.json"))
+f = m.get("fonts", {})
+ok = (f.get("headline", "").endswith("agent/fonts/Headline.ttf")
+      and f.get("body", "").endswith("agent/fonts/Body.ttf")
+      and not any("fell back" in w for w in m["warnings"]))
+sys.exit(0 if ok else 1)
+PY
+sed -i.bak 's/^- agent license number:.*/- agent license number: [PENDING — request from brokerage]/' "$TMP/agent/brand-context-compliance.md"
+OUT=$(python3 scripts/composite.py --base "$TMP/base.jpg" --agent "$TMP/agent" --channel ig \
+  --headline "x" --allow-demo --out "$TMP/p.jpg" 2>&1)
+[ $? -ne 0 ] && echo "$OUT" | grep -q "compliance strings not filled: license" \
+  && ! echo "$OUT" | grep -q "blank template" \
+  && ok "[PENDING …] reports unfilled compliance strings, still blocks" \
+  || bad "[PENDING …] misreported or not blocking: $OUT"
+# drive_sync agent-folder links the declared asset folder from Drive
+mkdir -p "$TMP/cfg" "$TMP/cache/demo/brand-context/my business/assets"
+cat > "$TMP/cfg/clients.json" <<JSON
+{"cache_root": "$TMP/cache", "clients": {"demo": {"name": "Demo", "posting_enabled": false, "drive": {}}}}
+JSON
+BC="$TMP/cache/demo/brand-context/my business"
+for f in about-me.md brand-voice.md working-style.md; do echo "# $f" > "$BC/$f"; done
+cp tests/fixtures/agent/brand-context-compliance.md "$BC/GUARDRAILS.md"
+sed 's#logos/#assets/#' tests/fixtures/agent/brand-context-visual.md > "$BC/brand-context-visual.md"
+cp tests/fixtures/agent/logos/*.png "$BC/assets/"
+RE_SKILLS_CONFIG_DIR="$TMP/cfg" python3 scripts/drive_sync.py agent-folder --client demo >"$TMP/af.log" 2>&1
+python3 - "$TMP/cache/demo/agent" <<'PY' && ok "agent-folder links assets/ and the logo resolves" || { bad "agent-folder logo does not resolve"; cat "$TMP/af.log"; }
+import sys; sys.path.insert(0, "scripts")
+from brandkit import AgentBrand
+b = AgentBrand(sys.argv[1])
+sys.exit(0 if b.logo_path("light").exists() and b.logo_path("dark").exists() else 1)
+PY
+grep -q "MISSING" "$TMP/af.log" && bad "agent-folder reported a declared asset missing" || ok "agent-folder reports nothing missing"
+python3 - "$TMP/agent" <<'PY' && ok "a declared path that escapes the folder is still refused" || bad "tenancy escape accepted"
+import sys, re; sys.path.insert(0, "scripts")
+from pathlib import Path
+from brandkit import AgentBrand, BrandError
+v = Path(sys.argv[1], "brand-context-visual.md")
+v.write_text(re.sub(r"(light background:).*", r"\1 ../escape.png", v.read_text()))
+Path(sys.argv[1]).parent.joinpath("escape.png").write_bytes(b"x")
+try:
+    AgentBrand(sys.argv[1]).logo_path("light"); sys.exit(1)
+except BrandError as e:
+    sys.exit(0 if "escapes" in str(e) else 1)
+PY
+rm -rf "$TMP"
+
+echo "== market-update video props: sourced stats, legible inks =="
+TMP=$(mktemp -d)
+cat > "$TMP/scenes.json" <<'JSON'
+{"kind": "market", "headline": "h", "subline": "s", "hook": "k",
+ "market": {"area": "Fictional County", "period": "Demo month",
+  "stats": [{"label": "Median price", "value": "$400,000", "detail": "", "source": ""}]}}
+JSON
+OUT=$(python3 scripts/video_props.py --agent tests/fixtures/agent --allow-demo \
+  --scenes "$TMP/scenes.json" --out "$TMP/props.json" 2>&1)
+[ $? -eq 1 ] && echo "$OUT" | grep -q "uncited" && ok "an uncited market stat stops the video" \
+  || bad "uncited market stat passed: $OUT"
+python3 - <<'PY' && ok "market inks clear WCAG on a light ground; unreadable ground stops" || bad "market ink selection broken"
+import sys; sys.path.insert(0, "scripts")
+from brandkit import contrast_ratio, hex_to_rgb
+import video_props as vp
+colors = {"primary": "#1d77b8", "accent": "#e63946", "text-on-light": "#0f1b2d",
+          "text-on-dark": "#ffffff", "light-ground": "#f4f7fb"}
+cfg = {"market": {"period": "Demo month", "stats": [
+    {"label": "Median", "value": "$1", "source": "Demo"}]}}
+m = vp.market_block(cfg, colors)
+ok = contrast_ratio(hex_to_rgb(m["ink"]), hex_to_rgb(m["ground"])) >= 4.5
+ok &= contrast_ratio(hex_to_rgb(m["valueInk"]), hex_to_rgb(m["ground"])) >= 3
+ok &= m["ink"] != colors["text-on-dark"]
+# a pale palette on a white ground falls back to neutral near-black, never white
+pale = vp.market_block({"market": {**cfg["market"], "ground": "#ffffff"}},
+                       {"primary": "#fafafa", "text-on-light": "#ffffff"})
+ok &= pale["ink"] == "#111111"
+try:  # a ground no ink can read on must stop, not render
+    vp.market_block({"market": {**cfg["market"], "ground": "#101010"}},
+                    {"primary": "#202020", "text-on-light": "#151515"})
+    ok = False
+except ValueError:
+    pass
+sys.exit(0 if ok else 1)
+PY
+rm -rf "$TMP"
+
 echo "== the compliance shim still resolves to compliance-gate =="
 python3 -c "
 import sys, os

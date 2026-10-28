@@ -9,6 +9,7 @@ Tenancy: every path resolved here is inside agents/{slug}/. Nothing outside that
 folder can influence a run.
 """
 
+import os
 import re
 from pathlib import Path
 
@@ -24,9 +25,18 @@ def _strip_comments(text):
     return re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
 
 
+PENDING_RE = re.compile(r"\[PENDING\b[^\]]*\]", re.IGNORECASE)
+
+
 def is_blank_template(text):
-    """True if the file still contains unfilled template placeholders."""
-    body = _strip_comments(text)
+    """True if the file still contains unfilled template placeholders.
+
+    `[PENDING — request from brokerage]` is NOT a template placeholder: setup
+    writes it on purpose (context-kit-import.md) for wording only the brokerage
+    can supply. Those fields surface as unfilled compliance strings through
+    required_strings(), which names them, instead of as a blank file.
+    """
+    body = PENDING_RE.sub("", _strip_comments(text))
     if re.search(r"\[[A-Za-z][^\]]*\]", body):
         return True
     if re.search(r"_{3,}", body):
@@ -94,7 +104,7 @@ class AgentBrand:
     def colors(self):
         out = {}
         for key in ("primary", "secondary", "accent",
-                    "text-on-light", "text-on-dark"):
+                    "text-on-light", "text-on-dark", "light-ground"):
             val = _field(self.visual, key)
             if val:
                 m = HEX_RE.search(val)
@@ -114,16 +124,30 @@ class AgentBrand:
         if not val:
             raise BrandError(
                 f"{self.slug}: no '{key}' logo declared in brand-context-visual.md")
-        p = (self.dir / val).resolve()
+        p = self._inside(val)
+        if p is None:
+            raise BrandError(
+                f"{self.slug}: logo path escapes the agent folder: {val}. "
+                f"Tenancy requires assets live inside agents/{self.slug}/.")
         if not p.exists():
             raise BrandError(
                 f"{self.slug}: logo path does not resolve: {val} (looked in {p}). "
                 f"Setup must verify logo paths before production.")
-        if self.dir not in p.parents and p != self.dir:
-            raise BrandError(
-                f"{self.slug}: logo path escapes the agent folder: {val}. "
-                f"Tenancy requires assets live inside agents/{self.slug}/.")
-        return p
+        return p.resolve()
+
+    def _inside(self, val):
+        """The declared path under the agent folder, or None if it escapes.
+
+        Containment is checked on the DECLARED path (lexically), not after
+        following symlinks: `drive_sync.py agent-folder` links the client's own
+        Drive assets/ into the folder, and that link is part of the folder.
+        What tenancy forbids is a declared value that leaves the folder
+        (`../other-agent/logo.png`, an absolute path).
+        """
+        raw = Path(val).expanduser()
+        # An absolute path is compared after resolving (/tmp vs /private/tmp).
+        p = raw.resolve() if raw.is_absolute() else Path(os.path.normpath(self.dir / raw))
+        return p if self.dir in p.parents else None
 
     @property
     def headshot_path(self):
@@ -132,10 +156,10 @@ class AgentBrand:
         val = _field(self.visual, "headshot")
         if not val:
             return None
-        p = (self.dir / val).resolve()
-        if not p.exists() or (self.dir not in p.parents):
+        p = self._inside(val)
+        if p is None or not p.exists():
             return None
-        return p
+        return p.resolve()
 
     @property
     def logo_min_width(self):
@@ -153,10 +177,31 @@ class AgentBrand:
     def logo_placement(self):
         return (_field(self.visual, "default placement") or "bottom-left").split("|")[0].strip()
 
+    def _font(self, key):
+        """A declared font as a path when it resolves, else the raw value.
+
+        Relative paths resolve against the agent folder, like logo paths, so the
+        folder works from any working directory. Absolute paths are honored as
+        written. A value that is not a file (a family name) is returned as-is
+        for the caller's name lookup, which records the fallback if it fails.
+        """
+        val = _field(self.visual, key)
+        if not val:
+            return None
+        p = Path(val).expanduser()
+        cand = p if p.is_absolute() else (self.dir / p)
+        return str(cand.resolve()) if cand.is_file() else val
+
     @property
     def headline_font(self):
         """Path or name of the brand headline font; None if undeclared."""
-        return _field(self.visual, "headline font")
+        return self._font("headline font")
+
+    @property
+    def body_font(self):
+        """Path or name of the brand body font (subheads, compliance text);
+        None if undeclared."""
+        return self._font("body font")
 
     @property
     def max_headline_chars(self):

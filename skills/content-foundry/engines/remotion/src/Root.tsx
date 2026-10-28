@@ -4,14 +4,16 @@ import {propsSchema, VideoProps} from './shared';
 import {Walkthrough, walkthroughDuration} from './Walkthrough';
 import {SalesBrief, salesBriefDuration} from './SalesBrief';
 import {Teaser, teaserDuration} from './Teaser';
+import {MarketUpdate, marketUpdateDuration} from './MarketUpdate';
 import {CampaignFilm} from './campaign/CampaignFilm';
 import {CampaignProps} from './campaign/types';
 
 // 1080x1920 @ 30fps — IG Reels/Story per channel-specs.md.
-// Three products from one props file (video_props.py v2):
-//   Walkthrough — narrated room-by-room digital walkthrough (flagship)
-//   SalesBrief  — typography-led digital sales brief
-//   Teaser      — 10s hook cut
+// Products from one props file (video_props.py v2):
+//   Walkthrough  — narrated room-by-room digital walkthrough (flagship)
+//   SalesBrief   — typography-led digital sales brief
+//   Teaser       — 10s hook cut
+//   MarketUpdate — market data video on a light brand ground (kind: market)
 // Durations derive from the scene/VO data, never hardcoded.
 
 const DEFAULTS: VideoProps = {
@@ -38,6 +40,26 @@ const DEFAULTS: VideoProps = {
     fairHousing: 'Equal Housing Opportunity.',
   },
   warnings: [],
+};
+
+// Studio preview only. Fictional numbers, labelled as such; real runs get
+// cited statistics from video_props.py.
+const MARKET_DEFAULTS: VideoProps = {
+  ...DEFAULTS,
+  kind: 'market',
+  headline: 'Fictional County market, demo data',
+  subline: 'Demo data. Not a real market.',
+  hook: 'Inventory is up. Prices are holding.',
+  scenes: [],
+  briefCards: [],
+  market: {
+    area: 'Fictional County', period: 'Demo month',
+    ground: '#f4f7fb', ink: '#0f1b2d', valueInk: '#1d77b8', rule: '#e63946',
+    stats: [
+      {label: 'Median price', value: '$400,000', detail: 'Demo figure.', source: 'Demo data'},
+      {label: 'Homes for sale', value: '1,234', detail: 'Demo figure.', source: 'Demo data'},
+    ],
+  },
 };
 
 export const Root: React.FC = () => {
@@ -72,6 +94,15 @@ export const Root: React.FC = () => {
         durationInFrames={teaserDuration(DEFAULTS)}
         calculateMetadata={({props}) => ({durationInFrames: teaserDuration(props)})}
         defaultProps={DEFAULTS}
+      />
+      <Composition
+        id="MarketUpdate"
+        component={MarketUpdate}
+        schema={propsSchema}
+        width={1080} height={1920} fps={30}
+        durationInFrames={marketUpdateDuration(MARKET_DEFAULTS)}
+        calculateMetadata={({props}) => ({durationInFrames: marketUpdateDuration(props)})}
+        defaultProps={MARKET_DEFAULTS}
       />
     </>
   );

@@ -3,7 +3,7 @@ import {
   AbsoluteFill, Sequence, interpolate, spring, useCurrentFrame, useVideoConfig,
 } from 'remotion';
 import {
-  Bed, Endcard, FittedPhoto, SAFE, serif, VideoProps, useBrandFont,
+  Bed, Endcard, endcardLabel, FittedPhoto, SAFE, serif, VideoProps, useBrandFont,
 } from './shared';
 
 const HOOK_F = 84;
@@ -73,7 +73,7 @@ export const SalesBrief: React.FC<VideoProps> = (props) => {
       </Sequence>
       <Sequence from={cursor + COMMUNITY_F} durationInFrames={props.endcard.frames}>
         <Endcard design={props.design} brand={props.brand} subline={props.subline}
-                 compliance={props.compliance} />
+                 compliance={props.compliance} label={endcardLabel(props)} />
       </Sequence>
     </AbsoluteFill>
   );

@@ -15,6 +15,7 @@ description: >
 
 Invocations:
 - `/content-foundry --agent {slug} --drop {path} "{prompt or library job}"`
+- `/content-foundry --agent {slug} --drop none --job {n}` — research-only library job, no drop (see Stage 1)
 - `/content-foundry setup --agent {slug}` — build or complete an agent's foundation folder
 - `/content-foundry setup --from-research {urls}` — research-drafted foundation for outreach (see `references/prospect-research.md`)
 - `/content-foundry outreach --listing {url} --agent-profile {url}` — the full spec-sample suite, end to end (see `references/engine-outreach.md`)
@@ -100,7 +101,9 @@ Two folders per the client's own README:
   `my clients/`, `my deals/`.
 
 `agent-folder` maps the Drive layout onto the Tier-1/Tier-2 names the rest of this pipeline
-expects, by symlink, so the Drive sync stays the one source of truth. It reports anything missing.
+expects, by symlink, so the Drive sync stays the one source of truth. It also links the folder that
+holds each declared logo, headshot and font (usually `assets/`), so `assets/logo.png` resolves in
+the agent folder as it does in Drive. It reports anything missing.
 `brand-context-visual.md` has no Drive equivalent yet — without it Stage 7 cannot place brand
 colour or the logo.
 
@@ -117,6 +120,20 @@ Deterministic walk: type, size, hash, dimensions, EXIF. Flags duplicates by hash
 types, and empty folders. **Unsupported files are reported, never fatal.** If the folder is empty or
 every asset is unusable, stop here and say so — don't proceed to spend tokens.
 
+**No-drop path (research-only jobs).** Some library jobs need nothing from a drop: #4 market
+update, #7 neighborhood guide, #8 educational carousel, and #5 agent intro when the agent folder
+declares a headshot that exists. Run them explicitly:
+
+`python scripts/inventory.py none --job {n} --agent agents/{slug} --out runs/{run}/asset-manifest.json`
+
+(or `{drop-path} --allow-empty --job {n} ...` when an empty drop folder exists). The script reads
+`references/prompt-library.md` and refuses any job with a "Needs from drop" line the agent folder
+cannot meet, and any run that does not name its job. Freehand prompts always need a drop. An
+allowed run records `drop.mode = "none"`, the job and the reason in `runs/{run}/run.json` and
+the manifest. Stage 2 then writes a no-drop `unified-context.md`. Every later stage and gate
+runs unchanged. The one difference is sourcing: every fact must trace to a Stage 3 citation or
+the agent folder, because there is no dropped asset to trace it to.
+
 ### Stage 2 — UNIFY
 `python scripts/unify.py runs/{run}/asset-manifest.json --out runs/{run}/unified-context.md`
 
@@ -125,6 +142,9 @@ Per-type handlers → text + structured metadata:
 - PDF → extracted text (MLS sheets, brand guides)
 - `.txt` / `.md` containing links → fetch and summarize
 - images → model-generated description + EXIF
+
+On a no-drop run (Stage 1 recorded `drop.mode = "none"`), `unify.py` writes a short document
+that says there is no drop and where facts may come from. It does not stop the run.
 
 Output is one canonical document describing everything dropped. Describe images honestly: a
 screenshot of a prior marketing graphic is a *reference*, not a listing photo, and the brief should
@@ -266,7 +286,7 @@ explicit step.
 
 | Condition | Response |
 |---|---|
-| Drop folder empty or all-unusable | Stop at Stage 1, list what was found and what's needed |
+| Drop folder empty or all-unusable | Stop at Stage 1, list what was found and what's needed. A research-only library job may continue only through the explicit no-drop path (Stage 1) |
 | Tier-1 file still has template placeholders | Stop, run setup interview for that file |
 | Logo path in Tier 2 doesn't resolve | Stop at setup/composite, name the missing path |
 | Image API key absent | Stop at setup with the key-configuration steps |
