@@ -2,7 +2,7 @@
 name: compliance-gate
 description: >
   Check any piece of real estate copy against the Fair Housing baseline, a client's own
-  GUARDRAILS card, and an optional per-MLS profile — before it reaches a client or the public.
+  GUARDRAILS card, and an optional per-MLS profile, before it reaches a client or the public.
   Catches coded demographic language ("perfect for", "safe neighborhood", "great schools",
   "up-and-coming"), outcome promises ("guaranteed", "will appreciate"), and unsourced figures.
   This is also the canonical rules module the other skills' COMPLIANCE gates import. Triggers on
@@ -11,7 +11,7 @@ description: >
   marketing or listing language before publication.
 ---
 
-# compliance-gate — one copy of the rules, checked everywhere
+# compliance-gate: one copy of the rules, checked everywhere
 
 Invocations:
 - `/compliance-gate` on a pasted caption, listing description, email or ad
@@ -23,8 +23,10 @@ Invocations:
 ## Why this is a skill and not a suggestion
 
 The licensee is liable for published content regardless of who or what wrote it. "The AI wrote
-it" is not a defense, and HUD confirmed in 2024 that the Fair Housing Act reaches AI-generated
-advertising. The phrases this gate blocks read as ordinary warm copy — that is exactly why a
+it" is not a defense. The Fair Housing Act itself (42 U.S.C. § 3604(c)) bars discriminatory
+housing ads no matter who or what wrote them. Do not cite HUD's April 29, 2024 digital-advertising
+guidance: HUD withdrew it effective Sept 17, 2025 (Federal Register 2026-06624) and says
+non-compliant ads remain subject to enforcement. The phrases this gate blocks read as ordinary warm copy. That is exactly why a
 machine has to catch them, every time, before a human gets attached to the sentence.
 
 ## Non-negotiable laws
@@ -34,13 +36,13 @@ machine has to catch them, every time, before a human gets attached to the sente
    its own list. Add a rule here and every gate in the bundle picks it up at once. Never copy a
    rule table into another skill.
 2. **Profiles add, never remove.** A per-MLS profile in `config/compliance/<name>.json` can add
-   phrases a local board prohibits. It cannot remove a baseline rule — boards differ in what they
+   phrases a local board prohibits. It cannot remove a baseline rule. Boards differ in what they
    additionally prohibit, not in whether Fair Housing applies. The tests assert this.
 3. **The gate must be able to fail.** `tests/fixtures/fail/copy.txt` is a caption that trips
    every category, run on every test pass. A lint that has never failed is not wired correctly.
 4. **Compliance is placement, not wording.** This gate refuses *prohibited* language. Required
    language (license lines, brokerage disclosures) is supplied by the brokerage and composited
-   from disk by the skill producing the artifact — the model never invents or paraphrases a
+   from disk by the skill producing the artifact; the model never invents or paraphrases a
    legal disclosure.
 5. **A pass is not legal advice.** The gate catches known-bad patterns; it cannot certify a
    sentence as lawful. Say so when reporting a clean result.
@@ -65,7 +67,7 @@ Later layers only ever ADD.
 
 Edit `BANNED` / `PROMISE` / `NEEDS_SOURCE` in `scripts/fair_housing.py`, add the phrase to
 `tests/fixtures/fail/copy.txt` or a spot-check in `tests/run_tests.sh`, run the suite. Every
-skill's COMPLIANCE gate now enforces it — that is the point of one copy.
+skill's COMPLIANCE gate now enforces it. That is the point of one copy.
 
 ## Setup
 

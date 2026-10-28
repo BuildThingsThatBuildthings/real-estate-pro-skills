@@ -25,3 +25,21 @@ skills/content-foundry/engines/remotion/public/job/
 # Local demonstration assets are generated per run, never shipped with skills.
 skills/content-foundry/engines/remotion/public/fictional/
 skills/content-foundry/engines/remotion/node_modules
+# added by portfolio cleanup 2026-10-28
+.next/
+.netlify/
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.sample
+credentials*.json
+*.pem
+.venv/
+*.mp4
+*.mov
+*.webm
+*.wav
+*.m4a
+dist/
+build/

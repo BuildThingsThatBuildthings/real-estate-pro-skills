@@ -5,6 +5,10 @@ description: "End to end posting pipeline for Post Bridge. Takes a folder of fin
 
 # Post Bridge posting pipeline
 
+**AIA/BT2 runtime authority:** use `/Users/ryan/content-factory` and the installed `~/.claude/skills/post-bridge-schedule` skill. This reusable bundle is not a separate scheduling engine. Its scheduling entrypoints delegate to the canonical engine or refuse execution; never bypass that delegation to restore older timing behavior. For managed video campaigns enter through `/weekly-content-machine` and `video_agent/scripts/schedule_batch.py`.
+
+**Current timing policy (Ryan, October 15, 2026):** choose placements from current analytics across the full 06:00–22:00 America/Chicago window. There is no fixed minute grid, no global gap between posts on disjoint accounts, and no morning/afternoon/evening spread quota. Retain the configured gap on shared accounts, the existing before-10:00 morning anchor, lead time, and all other release and retiming safeguards. Re-timing may cross dayparts within the same Central calendar day. Five full-roster social posts/day remains separate from native YouTube releases. There is no separate three-public-video daily minimum or maximum. Read current Content Factory rules and live channel occupancy before placement.
+
 ## The only way AIA/BT2 posts are created
 
 **This is the ONLY way AIA/BT2 posts are created. Callers: social agent, video agent.**
@@ -183,7 +187,7 @@ win and the conflict gets flagged so one of the two is fixed.
 
 ```bash
 python3 scripts/windows.py report     # hour and weekday performance, ranked
-python3 scripts/windows.py ladder     # the daypart slot ladder, per rung and in full
+python3 scripts/windows.py ladder     # analytics-ranked placements across the allowed window
 ```
 
 **Never hardcode slots.** `windows.py` scores each hour on **medians, never means**: median
@@ -198,25 +202,15 @@ Re-derive every run. The ranking moves as the account grows.
 
 **Posting window: 06:00 to 22:00 Central, inclusive** (`windows.earliest_start` = "06:00",
 `windows.latest_start` = "22:00"). The last post may start at exactly 22:00; nothing starts
-after 22:00 (22:15 is refused) or before 06:00 (05:45 is refused). Ladder slots are HH:15,
-except hour 22, whose slot is exactly 22:00. `windows.forbidden_hours` (0-5 and 23) only keeps
+after 22:00 (22:15 is refused) or before 06:00 (05:45 is refused). There is no fixed
+minute grid; exactly 22:00 is a valid last start. `windows.forbidden_hours` (0-5 and 23) only keeps
 overnight hours out of scoring. `free_slot`, the `create_batch.py` lint and `repair.py` all
 enforce the window through `windows.in_window`.
 
 **Lead time: 1 hour** (`approval.lead_hours` = 1). A new post may be placed as soon as one
 hour from now.
 
-**Spread across the day, never cluster.** Ranking hours globally put every post before 4pm, so
-the ladder is built per **daypart** (CT): **morning 06-11, afternoon 12-16, evening
-17:00-22:00** (the evening may use the 22:00 slot; an hour-22 score maps to slot "22:00").
-Each daypart ranks its own hours by the score above. The ladder is best morning, best
-afternoon, best evening, then round-robin the next-best remaining hour of each daypart
-(morning, afternoon, evening, ...) until 8 slots; a daypart that runs out is skipped. So rung 3
-is exactly one slot per daypart. A daypart with no scored hour still gets one slot: its hour
-with the most posts on record, else the fixed default 09 / 13 / 19. That one slot per empty
-daypart is the only slot that does not come from a score. The lint's allowed set
-(`create_batch._allowed_ct`), the planner's fallback ladder (`schedule_engine.LADDER`) and
-`repair.py` all use this same full daypart order (`windows.ladder_order`).
+**Optimize across the full window.** Rank current evidenced hours across 06:00–22:00 CT. Do not allocate quotas to morning, afternoon or evening, round-robin dayparts, or choose an empty daypart ahead of stronger evidence. Preserve the configured before-10:00 morning anchor and shared-account spacing. A ranking is a preference order, not a fixed timestamp whitelist. If evidence is missing, follow the canonical documented fallback and report that limitation without inventing performance.
 
 **Source.** When `windows.warehouse_url` is set, `windows.py` first asks the War Room warehouse
 verb `social.windows` (POST, header `x-ops-key` from `$WARROOM_OPS_KEY` or the keychain item
@@ -255,17 +249,9 @@ Existing scheduled records **count toward the 5**, in full-post equivalents: a r
 9 channels is one post, a single-account record is 1/9. A day that already holds 5 gets
 nothing new.
 
-**Where each day's posts go.** The next post on a day goes to that day's **emptiest daypart**
-(counting what is already scheduled there, same units), ties broken morning, afternoon,
-evening; inside the daypart, its best slot that clears the spacing rules. On an empty day
-5/day is best morning, best afternoon, best evening, next morning, next afternoon. A day that
-already has 10:23 / 12:41 / 14:57 gets its remaining two in the evening and in the morning
-clear of 10:23, never a third afternoon.
+**Where each day's posts go.** Use the best current analytics-supported placement anywhere in the allowed window that clears same-account spacing, lead time and the retained morning anchor. Read live occupancy, then account for pending placements. A blocked preferred time falls back to the next eligible time across the full window; it does not force a different daypart or push useful content to the calendar tail.
 
-Never skip a rung. Never fill block 2 ahead of block 1. **A rung is a count target, not a
-slot whitelist** — a blocked slot falls back to the rest of **its own daypart** first, then to
-the other dayparts, rather than skip the day. Stop when media runs out and report the exact
-remaining gap in posts.
+Never skip a rung. Never fill block 2 ahead of block 1. **A rung is a count target, not a slot whitelist.** Stop when media runs out and report the exact remaining gap in posts. Native YouTube releases are planned separately and do not consume a full-roster social slot; still check shared YouTube-channel collisions.
 
 ## Step 7. Plan placements, with collision detection
 
@@ -275,11 +261,7 @@ python3 scripts/repair.py scan
 python3 scripts/repair.py fix --all
 ```
 
-**Minimum gap between two posts on the same account** is `min_gap_minutes` (45, per the AIA account registry). Posts on
-**different** accounts only need `min_global_stagger_minutes` (pipeline.json, default 10), so
-two records never land on the same minute. Both are checked against the live calendar **plus**
-the pending batch, never the batch alone, in `schedule_engine.free_slot`, the lint and
-`repair.py`.
+**Minimum gap between two posts on the same account** is `min_gap_minutes` (45, per the AIA account registry). Check shared-account collisions against the live calendar **plus** the pending batch, never the batch alone. Posts on disjoint accounts may share a timestamp; no global stagger applies. The canonical planner, lint and repair route use this same account-scoped rule.
 
 A post from this pipeline targets every configured channel as one record, so for it "the same
 account" is every channel: any record on any of those channels within 45 minutes still blocks
@@ -354,7 +336,7 @@ another pipeline having already consumed the folder.
 Themes are supposed to repeat, vary, and overlap. Two posts making a similar argument days
 apart is normal content, not a defect. Never move, delay, or hold a post because its idea
 resembles another post's idea. **The only collision that exists is a time collision on the
-same account** (Step 7, `min_gap_minutes`), plus the cross-account stagger.
+same account** (Step 7, `min_gap_minutes`). There is no disjoint-account global stagger.
 
 If a batch is given a window and a count, every post lands inside that window. Do not
 reduce the count and do not push posts outside the window for editorial reasons. Placement
@@ -374,9 +356,8 @@ All must pass:
 3. every caption distinct and non empty
 4. video title set and within limit
 5. image-only channel carries an image, not video
-6. slot is in the derived allowed set
-7. `min_gap_minutes` honoured against every existing and pending post on the same accounts,
-   and `min_global_stagger_minutes` against every post on any account
+6. slot is inside the allowed window and honors lead time and the retained morning anchor; no fixed minute grid or forced daypart quota
+7. `min_gap_minutes` honored against every existing and pending post sharing an account; no global gap between disjoint accounts
 8. every media id resolves and byte size matches source
 
 Also lint the copy against `pipeline.captions`: hashtags, dashes, banned words.

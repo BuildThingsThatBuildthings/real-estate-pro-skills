@@ -2,7 +2,9 @@
 
 Folder of finished video in. Verified scheduled social records out.
 
-`SKILL.md` is the operating manual Claude follows. This file is the human summary.
+`SKILL.md` is the reusable manual. AIA/BT2 scheduling executes through the installed `/Users/ryan/content-factory/tenants/aia-bt2/skills/post-bridge-schedule` skill and canonical engine; this bundle is not a second posting authority.
+
+**Current timing policy (Ryan, October 15, 2026):** choose placements from current analytics across the full 06:00–22:00 America/Chicago window. There is no fixed minute grid, no global gap between posts on disjoint accounts, and no morning/afternoon/evening spread quota. Retain the configured gap on shared accounts, the existing before-10:00 morning anchor, lead time, and all other release and retiming safeguards. Re-timing may cross dayparts within the same Central calendar day. Five full-roster social posts/day remains separate from native YouTube releases. There is no separate three-public-video daily minimum or maximum. Read current Content Factory rules and live channel occupancy before placement.
 
 ## What it does
 
@@ -33,7 +35,7 @@ the ladder rather than skip the day.
 write goes through write, sleep, re-read, assert, retry. See
 [docs/post-bridge-api-notes.md](../../docs/post-bridge-api-notes.md).
 
-**Nothing publishes without a human.** The pipeline stops at a dated schedule table for approval.
+**Authorization is campaign-specific.** The authorized AIA/BT2 video and social agents use lint/create/readback without an additional scheduling approval hold. Other clients retain their explicit workspace and posting authorization requirements.
 
 ## Commands
 
