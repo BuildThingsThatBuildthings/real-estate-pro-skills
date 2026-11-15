@@ -16,14 +16,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.8", "3.13"]
+        # Retain legacy core checks; the documented scheduling minimum is 3.9.
+        python: ["3.8", "3.9", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Dependencies (Pillow is content-foundry's one hard dep)
+      - name: Core gate dependencies
         run: pip install Pillow
 
       - name: Every script compiles
@@ -49,14 +50,15 @@ jobs:
       - name: Gate suites (must pass, and must contain failure assertions)
         run: |
           set -e
-          for s in chatgpt-said sphere-signal listing-price-brief compliance-gate brand-voice content-foundry post-bridge-schedule; do
+          for s in chatgpt-said sphere-signal listing-price-brief compliance-gate brand-voice content-foundry; do
             echo "::group::$s"
             bash "skills/$s/tests/run_tests.sh"
             echo "::endgroup::"
           done
 
-      - name: Listing campaign evidence, rights and review gates
-        run: python3 -m unittest discover -s skills/aia-listing-campaign/tests -v
+      - name: Offline scheduling gates (pipeline runtime is Python 3.9+)
+        if: matrix.python != '3.8'
+        run: bash skills/post-bridge-schedule/tests/run_tests.sh
 
       - name: Doctors
         run: |
@@ -88,3 +90,22 @@ jobs:
           fix = {c['id'] for c in json.load(open('tests/fixtures/pass/claims.json'))['claims']}
           assert live == fix, 'chatgpt-said pass fixture is stale vs splitter'
           print('fixtures fresh')"
+
+  campaign:
+    # Production scripts require Python 3.11+, independently of legacy core gates.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Local media tools and a portable fixture font
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg poppler-utils fonts-dejavu-core
+      - name: Offline production-test dependencies (no providers or model weights)
+        run: pip install Pillow==12.2.0 fonttools qrcode reportlab pypdf numpy opencv-python-headless
+      - name: Complete fictional campaign suite
+        run: python3 -m unittest discover -s skills/aia-listing-campaign/tests -v

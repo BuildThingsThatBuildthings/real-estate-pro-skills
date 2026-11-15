@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Render a source-led flyer plus readable branded Markdown handoff PDFs."""
-import argparse,json,re
+import argparse,io,json,re
+from font_text import coverage, supported_text
 from production_inputs import Inputs
 from pathlib import Path
 import qrcode
@@ -13,16 +14,36 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.utils import ImageReader
 
+def checked_text(text, font, where='document text'):
+ try:return supported_text(str(text),coverage(font),font)
+ except ValueError as exc:raise ValueError(f'{where}: {exc}') from exc
+
+def checked_paragraph(text, style, fonts, where='document paragraph'):
+ # ReportLab resolves markup and entities before exposing the text fragments.
+ # Validate only the displayed characters, in the weight that will draw them.
+ paragraph=Paragraph(text,style)
+ for fragment in paragraph.frags:
+  if getattr(fragment,'text',''):
+   fragment.text=checked_text(fragment.text,fonts[fragment.fontName],where)
+ return paragraph
+
 def main():
  inputs=Inputs()
  def source(path):
   path=Path(path).resolve();inputs.read(path);return path
  def read(path):return inputs.read(path).decode('utf-8')
  p=argparse.ArgumentParser();p.add_argument('run');p.add_argument('--context-dir',default='context');p.add_argument('--output-prefix',default='');a=p.parse_args();r=Path(a.run);ctx=r/a.context_dir;b=json.loads(read(ctx/'brand.json'));facts=json.loads(read(ctx/'flyer.json'))
- for weight in [400,700]:pdfmetrics.registerFont(TTFont('Brand'+str(weight),str(source(r/b.get('fonts',{}).get(str(weight),'working/inter-'+str(weight)+'.ttf')))))
+ fonts={}
+ for weight in (400,700):
+  name='Brand'+str(weight)
+  fonts[name]=inputs.read(r/b.get('fonts',{}).get(str(weight),'working/inter-'+str(weight)+'.ttf'))
+  pdfmetrics.registerFont(TTFont(name,io.BytesIO(fonts[name])))
+ def guard(text,where='',bold=False):
+  return checked_text(text,fonts['Brand700' if bold else 'Brand400'],where or 'document text')
+ def paragraph(text,style):return checked_paragraph(text,style,fonts)
  out=r/a.output_prefix/facts['output_folder'];out.mkdir(exist_ok=True,parents=True);qrpath=r/a.output_prefix/facts.get('qr_output',str(Path(facts['output_folder'])/'listing-qr.png'));qrpath.parent.mkdir(parents=True,exist_ok=True);qr=qrcode.make(facts['url']);qr.save(qrpath)
  c=canvas.Canvas(str(out/(facts['id']+'.pdf')),pagesize=(612,792));c.setTitle(facts['address']+' | '+b['name']);c.setFillColor(HexColor(b['paper']));c.rect(0,0,612,792,fill=1,stroke=0);c.setFillColor(HexColor(b['red']));c.rect(0,782,612,10,fill=1,stroke=0)
- def txt(x,y,s,size=12,bold=False):c.setFillColor(HexColor(b['dark']));c.setFont('Brand700' if bold else 'Brand400',size);c.drawString(x,y,s)
+ def txt(x,y,s,size=12,bold=False):s=guard(s,'flyer',bold);c.setFillColor(HexColor(b['dark']));c.setFont('Brand700' if bold else 'Brand400',size);c.drawString(x,y,s)
  txt(36,747,b['name'].upper(),11,True);txt(36,714,facts['address'],25,True);txt(36,691,facts['location'],12)
  def photo(name,xy,size,focal=(.5,.5)):
   image=Image.open(source(r/facts.get('photos_folder','assets/photos')/name)).convert('RGB');image=ImageOps.fit(image,(int(size[0]*2),int(size[1]*2)),Image.Resampling.LANCZOS,centering=focal)
@@ -38,7 +59,7 @@ def main():
  pdfmetrics.registerFontFamily('Brand400',normal='Brand400',bold='Brand700',italic='Brand400',boldItalic='Brand700')
  styles=getSampleStyleSheet();styles.add(ParagraphStyle('BrandBody',fontName='Brand400',fontSize=10,leading=15,spaceAfter=9));styles.add(ParagraphStyle('BrandH1',fontName='Brand700',fontSize=23,leading=28,spaceBefore=16,spaceAfter=18,textColor=HexColor(b['dark'])));styles.add(ParagraphStyle('BrandH3',fontName='Brand700',fontSize=10,leading=15,spaceBefore=10,spaceAfter=5,keepWithNext=True));styles.add(ParagraphStyle('BrandH2',fontName='Brand700',fontSize=15,leading=20,spaceBefore=15,spaceAfter=10,textColor=HexColor(b['red'])))
  def footer(can,doc):
-  can.setFont('Brand400',8);can.setFillColor(HexColor(b['dark']));can.drawString(40,25,b['name']+' · '+b['brokerage']);can.drawRightString(572,25,str(doc.page))
+  can.setFont('Brand400',8);can.setFillColor(HexColor(b['dark']));can.drawString(40,25,guard(b['name']+' · '+b['brokerage'],'footer'));can.drawRightString(572,25,guard(str(doc.page),'page number'))
  targets=json.loads(read(ctx/'documents.json'))
  for target in targets:
   item={'source':target} if isinstance(target,str) else target
@@ -52,8 +73,8 @@ def main():
    parts=re.split(r'(?m)(?=^## )',content)
    content='# '+item.get('title',file.stem)+'\n\n'+'\n\n'.join(section for section in parts if section.splitlines() and section.splitlines()[0].removeprefix('## ') in item['sections'])
   contact=b['name']+' · '+b['brokerage']+'<br/>C '+b['phone']+(' / O '+b['officePhone'] if b.get('officePhone') else '')
-  flow.append(Paragraph(contact,styles['BrandBody']))
-  if item.get('contact_instruction'):flow.append(Paragraph('Include the contact block above with every public post.',styles['BrandBody']))
+  flow.append(paragraph(contact,styles['BrandBody']))
+  if item.get('contact_instruction'):flow.append(paragraph('Include the contact block above with every public post.',styles['BrandBody']))
   for block in re.sub(r'(?m)^(#{1,3} )',r'\n\n\1',content).split('\n\n'):
    block=block.strip()
    if not block:continue
@@ -65,10 +86,10 @@ def main():
     if options.get('one_page_per_numbered_section') and re.match(r'^\d+\.',block):flow.append(PageBreak())
    if block.startswith('|'):
     for line in block.splitlines():
-     if not re.match(r'^\|[-| :]+\|$',line):flow.append(Paragraph(line.replace('|',' · '),styles['BrandBody']))
+     if not re.match(r'^\|[-| :]+\|$',line):flow.append(paragraph(line.replace('|',' · '),styles['BrandBody']))
     continue
    block=block.replace('&','&amp;').replace('<','&lt;').replace('>','&gt;');block=re.sub(r'\*\*(.+?)\*\*',r'<b>\1</b>',block);block=re.sub(r'\[([^\]]+)\]\((https?://[^)]+)\)',r'<link href="\2" color="#D71920">\1</link>',block);block=block.replace('\n','<br/>')
-   flow.append(Paragraph(block,styles[kind]))
+   flow.append(paragraph(block,styles[kind]))
   SimpleDocTemplate(str(pdfout),pagesize=(612,792),leftMargin=40,rightMargin=40,topMargin=35,bottomMargin=50).build(flow,onFirstPage=footer,onLaterPages=footer)
  inputs.finish()
  print(f'Flyer, QR and {len(targets)} handoff PDFs rendered')
