@@ -97,17 +97,18 @@ assert order and all('06:00' <= s <= '22:00' and (s.endswith(':15') or s == '22:
 assert '22:00' in order and '22:15' not in order, order
 assert [windows.daypart_of(s) for s in order[:3]] == ['morning','afternoon','evening'], order
 print('ok')" >/dev/null 2>&1 && ok "daypart ladder stays inside 06:00-22:00 (hour 22 = 22:00) and opens one slot per daypart" || bad "ladder escapes the window or clusters"
-rm -rf "$EX"
-
 rm -rf "$EMPTY"
 
 echo "== python unit tests (offline) =="
-if python3 -m unittest discover -s tests -p 'test_*.py' >/tmp/pbs-unittest.$$ 2>&1; then
+# Unit imports must use the same fictional profile, never private repo config.
+cp ../../config/pipeline.example.json "$EX/pipeline.json"
+if RE_SKILLS_CONFIG_DIR="$EX" python3 -m unittest discover -s tests -p 'test_*.py' >/tmp/pbs-unittest.$$ 2>&1; then
   ok "$(grep -E '^Ran ' /tmp/pbs-unittest.$$)"
 else
   cat /tmp/pbs-unittest.$$; bad "python unit tests"
 fi
 rm -f /tmp/pbs-unittest.$$
+rm -rf "$EX"
 echo
 echo "$PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]

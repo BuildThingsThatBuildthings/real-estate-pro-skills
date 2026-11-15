@@ -1,60 +1,54 @@
-"""Fail before rendering missing glyphs; preserve readable apostrophes in subset fonts.
-
-A cmap entry is not proof of ink. A font can map a codepoint to an empty outline that
-reserves an advance and paints nothing, and Pillow, reportlab and ffmpeg's drawtext all
-render that as a silent hole -- no exception, no warning. That is how the AIA compliance
-line
-
-    Vanessa Sisemore CalRE #02221256 | Pam Wojciechowski Team | Coldwell Banker Realty
-
-lost both separators to an 85-glyph Inter subset and nearly shipped. So every character
-is checked three ways: mapped in the cmap, not falling through to .notdef, and carrying
-a real outline.
-"""
+"""Validate glyph coverage and visible ink before drawing text with subset fonts."""
 import copy
+import io
 from functools import lru_cache
 
-# Private Use Area. No text font maps this, so what it renders IS this font's .notdef,
-# which gives a reference mask to compare suspect characters against. This catches fonts
-# whose .notdef is a visible box, where an ink test alone would pass while drawing the
-# wrong character.
-_SENTINEL = ''
 _PROBE_SIZE = 48
+
+
+def _source(font):
+    # Accept verified bytes so renderers can validate the same input they consume.
+    return io.BytesIO(font) if isinstance(font, bytes) else font
+
 
 @lru_cache(maxsize=16)
 def coverage(font_path):
     from fontTools.ttLib import TTFont
-    with TTFont(font_path) as font:
-        return frozenset(font.getBestCmap() or {})
+    with TTFont(_source(font_path)) as font:
+        return frozenset(code for code, name in (font.getBestCmap() or {}).items()
+                         if font.getGlyphID(name) != 0)
+
+
+def _mask_key(mask):
+    return mask.size, bytes(mask)
+
 
 @lru_cache(maxsize=16)
 def _probe(font_path):
-    """(pillow font, .notdef mask) for ink testing, or (None, None) if unrasterizable."""
+    """Return a rasterizer and its missing-glyph mask, or refuse validation."""
+    from PIL import ImageFont
+    # Private-use characters can be mapped. Pick a codepoint absent from this font.
+    glyphs = coverage(font_path)
+    sentinel = next(chr(code) for code in range(0x10ffff, -1, -1) if code not in glyphs)
     try:
-        from PIL import ImageFont
-        pil = ImageFont.truetype(font_path, _PROBE_SIZE)
-    except Exception:
-        return None, None
-    try:
-        return pil, pil.getmask(_SENTINEL).tobytes()
-    except Exception:
-        return pil, None
+        pil = ImageFont.truetype(_source(font_path), _PROBE_SIZE)
+        return pil, _mask_key(pil.getmask(sentinel))
+    except Exception as exc:
+        raise ValueError('Cannot rasterize chosen font to verify glyph ink') from exc
+
 
 @lru_cache(maxsize=4096)
 def draws_ink(font_path, char):
-    """True if `char` actually puts ink on the page in this font."""
-    if char in ' \n\r\t ':
+    """Reject empty outlines and missing-glyph substitutes, even with an advance."""
+    if char.isspace():
         return True
     pil, notdef = _probe(font_path)
-    if pil is None:
-        return True                     # cannot rasterize here; cmap check still applies
     try:
-        if notdef is not None and pil.getmask(char).tobytes() == notdef:
-            return False                # fell through to .notdef
-        box = pil.getbbox(char)
-    except Exception:
-        return True
-    return box is not None and (box[3] - box[1]) > 0
+        mask = pil.getmask(char)
+        return mask.getbbox() is not None and _mask_key(mask) != notdef
+    except Exception as exc:
+        raise ValueError(f'Cannot verify glyph ink for U+{ord(char):04X}') from exc
+
 
 def supported_text(text, glyphs, font_path=None):
     result = []
@@ -62,41 +56,41 @@ def supported_text(text, glyphs, font_path=None):
         if char in '\n\r\t' or ord(char) in glyphs:
             result.append(char)
         elif char == "'" and 0x2019 in glyphs:
-            result.append('’')
+            result.append('\u2019')
         else:
             raise ValueError(f'Chosen font is missing U+{ord(char):04X}; use a licensed font containing the required glyph')
     out = ''.join(result)
-    if font_path:
-        blank = sorted({c for c in out if not draws_ink(font_path, c)})
+    if font_path is not None:
+        blank = sorted({char for char in out if not draws_ink(font_path, char)})
         if blank:
-            listed = ', '.join(f'{c!r} U+{ord(c):04X}' for c in blank)
-            raise ValueError(
-                f'Chosen font maps but cannot draw {listed} -- it would render as a silent '
-                f'gap in {out!r}; use a font whose outlines for those characters have ink')
+            listed = ', '.join(f'{char!r} U+{ord(char):04X}' for char in blank)
+            raise ValueError(f'Chosen font maps but cannot draw {listed}; use a font with visible glyph outlines')
     return out
 
-def _overlay_strings(overlay):
-    """Text out of an overlay, whose lines may be strings, [text, ...] or {'text': ...}."""
-    for line in overlay.get('lines', []) or []:
-        if isinstance(line, str):
-            yield line
-        elif isinstance(line, dict) and isinstance(line.get('text'), str):
-            yield line['text']
-        elif isinstance(line, (list, tuple)) and line and isinstance(line[0], str):
-            yield line[0]
 
 def prepare_text(config):
     c = copy.deepcopy(config)
     entries = c.get('captions', []) + c.get('brand_text', [])
     entries += [item for shot in c.get('shots', []) for item in shot.get('text', [])]
-    # Overlays are burned in by the caller rather than by this module, but they are
-    # declared against the same font, so check them here too. Not doing so is exactly
-    # how the 164 Southwind films bypassed this guard entirely.
-    overlay_text = [s for o in c.get('overlays', []) or [] for s in _overlay_strings(o)]
-    if entries or overlay_text:
+    overlays = c.get('overlays', []) or []
+    if entries or any(overlay.get('lines') for overlay in overlays):
         glyphs = coverage(c['font'])
+        def check(text):
+            return supported_text(text, glyphs, c['font'])
         for item in entries:
-            item['text'] = supported_text(item['text'], glyphs, c['font'])
-        for s in overlay_text:
-            supported_text(s, glyphs, c['font'])
+            item['text'] = check(item['text'])
+        for overlay in overlays:
+            lines = []
+            for line in overlay.get('lines', []) or []:
+                if isinstance(line, str):
+                    line = check(line)
+                elif isinstance(line, dict) and isinstance(line.get('text'), str):
+                    line['text'] = check(line['text'])
+                elif isinstance(line, (list, tuple)) and line and isinstance(line[0], str):
+                    values = [check(line[0]), *line[1:]]
+                    line = tuple(values) if isinstance(line, tuple) else values
+                else:
+                    raise ValueError('Overlay lines require text')
+                lines.append(line)
+            overlay['lines'] = lines
     return c

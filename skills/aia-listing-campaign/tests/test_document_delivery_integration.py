@@ -16,7 +16,10 @@ import run_workflow
 from delivery_gate import validate_delivery
 
 DEPS = all(importlib.util.find_spec(name) for name in ('qrcode','reportlab','pypdf'))
-FONT = Path('/System/Library/Fonts/Supplemental/Arial.ttf')
+FONT = next((path for path in (
+    Path('/System/Library/Fonts/Supplemental/Arial.ttf'),
+    Path('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'),
+) if path.is_file()), Path('/missing-test-font.ttf'))
 
 
 @unittest.skipUnless(DEPS and FONT.exists(), 'Document runtime and local font required')
