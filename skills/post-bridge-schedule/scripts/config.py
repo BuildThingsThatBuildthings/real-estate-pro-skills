@@ -109,8 +109,10 @@ LIKE_WEIGHT = float(W.get("like_weight", 0.25))
 # Optional precomputed windows (War Room warehouse verb social.windows). Empty = live only.
 WAREHOUSE_URL = W.get("warehouse_url", "")
 WAREHOUSE_MAX_AGE_HOURS = float(W.get("warehouse_max_age_hours", 48))
-# Scheduling entrypoints delegate to Content Factory. Only same-account spacing
-# applies; disjoint accounts may post at the same instant.
+# The same-account gap (channels.json min_gap_minutes, 45) applies per account. Across
+# DIFFERENT accounts only this small stagger applies, so two records never land
+# on the same minute.
+MIN_GLOBAL_STAGGER = int(_pl.get("min_global_stagger_minutes", 10))
 TZ = _pl.get("timezone", {"dst_offset_hours": -5, "std_offset_hours": -6, "dst_months": [3, 11]})
 TOOLS = {k: expand(v) for k, v in _pl.get("tools", {}).items()}
 CAPTION_RULES = _pl.get("captions", {})

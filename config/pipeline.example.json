@@ -1,41 +1,26 @@
 {
-  "_comment": "Reusable configuration. AIA/BT2 scheduling uses current Content Factory rules and the canonical installed engine; legacy timing defaults are not authority.",
+  "_comment": "Cadence, safety rails, and host tool locations. Copy to pipeline.json.",
   "ramp": {
     "_comment": "Posts per day. Fill every day of block 1, then block 2, to each rung in order; existing records count toward it.",
-    "rungs": [
-      5
-    ],
+    "rungs": [5],
     "block_days": 30,
     "horizon_blocks": 2
   },
   "windows": {
-    "_comment": "Rank current analytics across the full permitted window. No fixed minute grid or forced daypart quota. Preserve same-account spacing and the configured before-10:00 morning anchor.",
+    "_comment": "How posting slots are derived from your own analytics.",
     "min_records_per_hour": 8,
     "_window": "Posting window 06:00 to 22:00 Central, inclusive: the last post may start exactly at latest_start, never after.",
     "earliest_start": "06:00",
     "latest_start": "22:00",
-    "forbidden_hours": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      23
-    ],
-    "view_reliable_platforms": [
-      "youtube",
-      "tiktok",
-      "facebook"
-    ],
-    "like_signal_platforms": [
-      "instagram"
-    ],
+    "forbidden_hours": [0, 1, 2, 3, 4, 5, 23],
+    "view_reliable_platforms": ["youtube", "tiktok", "facebook"],
+    "like_signal_platforms": ["instagram"],
     "view_weight": 0.75,
     "like_weight": 0.25,
     "warehouse_url": "",
     "warehouse_max_age_hours": 48
   },
+  "min_global_stagger_minutes": 10,
   "approval": {
     "_comment": "A new post may be placed as soon as lead_hours from now.",
     "lead_hours": 1
@@ -45,10 +30,7 @@
     "name": "America/Chicago",
     "dst_offset_hours": -5,
     "std_offset_hours": -6,
-    "dst_months": [
-      3,
-      11
-    ]
+    "dst_months": [3, 11]
   },
   "tools": {
     "post_bridge_cli": "~/.claude/skills/post-bridge/scripts/post-bridge.js",
@@ -62,28 +44,11 @@
     "allow_dashes": false,
     "proper_noun_exceptions": [],
     "banned_words": [
-      "dive deep",
-      "deep dive",
-      "unleash",
-      "unlock",
-      "supercharge",
-      "game-changer",
-      "revolutionary",
-      "disruptive",
-      "leverage",
-      "seamlessly",
-      "effortlessly",
-      "thought leader",
-      "best-in-class",
-      "cutting-edge",
-      "empower",
-      "synergy",
-      "paradigm",
-      "holistic",
-      "click here",
-      "learn more",
-      "book a call",
-      "free consultation"
+      "dive deep", "deep dive", "unleash", "unlock", "supercharge",
+      "game-changer", "revolutionary", "disruptive", "leverage",
+      "seamlessly", "effortlessly", "thought leader", "best-in-class",
+      "cutting-edge", "empower", "synergy", "paradigm", "holistic",
+      "click here", "learn more", "book a call", "free consultation"
     ]
   }
 }

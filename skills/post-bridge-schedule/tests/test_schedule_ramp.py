@@ -8,7 +8,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 HERE = Path(__file__).resolve().parent
-CANONICAL = Path('/Users/ryan/real-estate-pro-skills/skills/post-bridge-schedule/scripts')
+# The repo's own scheduling engine, next to this tests folder (self-contained; no machine paths).
+CANONICAL = HERE.parent / 'scripts'
 sys.path.insert(0, str(CANONICAL))
 target = HERE / 'schedule_engine.py' if (HERE / 'schedule_engine.py').exists() else CANONICAL / 'schedule_engine.py'
 spec = importlib.util.spec_from_file_location('tested_schedule_engine', target)
